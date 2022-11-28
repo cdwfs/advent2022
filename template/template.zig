@@ -1,6 +1,6 @@
 const std = @import("std");
 const util = @import("util.zig");
-const data = @embedFile("../data/day$.txt");
+const data = @embedFile("data/day$.txt");
 
 const Input = struct {
     allocator: std.mem.Allocator,
