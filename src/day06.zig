@@ -80,11 +80,11 @@ pub fn main() !void {
     try testPart2(allocator);
 }
 
-test "part1" {
+test "day06_part1" {
     try testPart1(std.testing.allocator);
 }
 
-test "part2" {
+test "day06_part2" {
     try testPart2(std.testing.allocator);
 }
 
