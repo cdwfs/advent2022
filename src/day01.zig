@@ -4,14 +4,18 @@ const data = @embedFile("data/day01.txt");
 
 const Input = struct {
     allocator: std.mem.Allocator,
+    lines: std.BoundedArray([]const u8, 2500),
 
     pub fn init(input_text: []const u8, allocator: std.mem.Allocator) !@This() {
-        var lines = std.mem.tokenize(u8, input_text, "\r\n");
-        _ = lines;
+        var lines = std.mem.split(u8, input_text, "\n");
         var input = Input{
             .allocator = allocator,
+            .lines = try std.BoundedArray([]const u8, 2500).init(0),
         };
         errdefer input.deinit();
+        while (lines.next()) |line| {
+            input.lines.appendAssumeCapacity(std.mem.trim(u8, line, "\r"));
+        }
 
         return input;
     }
@@ -20,23 +24,67 @@ const Input = struct {
     }
 };
 
-fn part1(input: Input) i64 {
-    _ = input;
-    return 0;
+fn part1(input: Input) !i64 {
+    var currentCalorieCount: i64 = 0;
+    var maxCalorieCount: i64 = -1;
+    for (input.lines.constSlice()) |line| {
+        if (line.len == 0) {
+            if (currentCalorieCount > maxCalorieCount) {
+                maxCalorieCount = currentCalorieCount;
+            }
+            currentCalorieCount = 0;
+        } else {
+            currentCalorieCount += try std.fmt.parseInt(i64, line, 10);
+        }
+    }
+    // Once more for the last elf
+    if (currentCalorieCount > maxCalorieCount) {
+        maxCalorieCount = currentCalorieCount;
+    }
+
+    return maxCalorieCount;
 }
 
-fn part2(input: Input) i64 {
-    _ = input;
-    return 0;
+fn part2(input: Input) !i64 {
+    var elfTotals = try std.BoundedArray(i64, 2500).init(0);
+
+    var currentCalorieCount: i64 = 0;
+    for (input.lines.constSlice()) |line| {
+        if (line.len == 0) {
+            elfTotals.appendAssumeCapacity(currentCalorieCount);
+            currentCalorieCount = 0;
+        } else {
+            currentCalorieCount += try std.fmt.parseInt(i64, line, 10);
+        }
+    }
+    // Once more for the last elf
+    elfTotals.appendAssumeCapacity(currentCalorieCount);
+
+    var caloriesPerElf = elfTotals.slice();
+    std.sort.sort(i64, caloriesPerElf, {}, comptime std.sort.desc(i64));
+    return caloriesPerElf[0] + caloriesPerElf[1] + caloriesPerElf[2];
 }
 
 const test_data =
-    \\test data here
+    \\1000
+    \\2000
+    \\3000
+    \\
+    \\4000
+    \\
+    \\5000
+    \\6000
+    \\
+    \\7000
+    \\8000
+    \\9000
+    \\
+    \\10000
 ;
-const part1_test_solution: ?i64 = null;
-const part1_solution: ?i64 = null;
-const part2_test_solution: ?i64 = null;
-const part2_solution: ?i64 = null;
+const part1_test_solution: ?i64 = 24000;
+const part1_solution: ?i64 = 71300;
+const part2_test_solution: ?i64 = 45000;
+const part2_solution: ?i64 = 209691;
 
 // Just boilerplate below here, nothing to see
 
@@ -44,14 +92,14 @@ fn testPart1(allocator: std.mem.Allocator) !void {
     var test_input = try Input.init(test_data, allocator);
     defer test_input.deinit();
     if (part1_test_solution) |solution| {
-        try std.testing.expectEqual(solution, part1(test_input));
+        try std.testing.expectEqual(solution, try part1(test_input));
     }
 
     var timer = try std.time.Timer.start();
     var input = try Input.init(data, allocator);
     defer input.deinit();
     if (part1_solution) |solution| {
-        try std.testing.expectEqual(solution, part1(input));
+        try std.testing.expectEqual(solution, try part1(input));
         print("part1 took {d:9.3}ms\n", .{@intToFloat(f64, timer.lap()) / 1000000.0});
     }
 }
@@ -60,14 +108,14 @@ fn testPart2(allocator: std.mem.Allocator) !void {
     var test_input = try Input.init(test_data, allocator);
     defer test_input.deinit();
     if (part2_test_solution) |solution| {
-        try std.testing.expectEqual(solution, part2(test_input));
+        try std.testing.expectEqual(solution, try part2(test_input));
     }
 
     var timer = try std.time.Timer.start();
     var input = try Input.init(data, allocator);
     defer input.deinit();
     if (part2_solution) |solution| {
-        try std.testing.expectEqual(solution, part2(input));
+        try std.testing.expectEqual(solution, try part2(input));
         print("part2 took {d:9.3}ms\n", .{@intToFloat(f64, timer.lap()) / 1000000.0});
     }
 }

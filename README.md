@@ -1,27 +1,48 @@
-# Advent Of Code Zig Template
+My [Advent of Code 2022](https://adventofcode.com/2022) solutions, implemented in
+[Zig](https://www.ziglang.org/) and built using [VS Code](https://code.visualstudio.com/).
 
-This repo provides a template for Advent of Code participants using Zig.  It contains a main file for each day, a build.zig file set up with targets for each day, and Visual Studio Code files for debugging.
+_Based on the [Zig AoC template](https://github.com/SpexGuy/Zig-AoC-Template) provided by [@SpexGuy](https://github.com/SpexGuy/).
+Instructions to build and extend the template are [here](TEMPLATE.md)._
 
-This template has been tested with Zig 0.10.0.  It may not work with other versions.
+## TIL
 
-## How to use this template:
+A list of the puzzles, and what new language/tool features I learned each day:
 
-The src/ directory contains a main file for each day.  Put your code there.  The build command `zig build dayXX [target and mode options] -- [program args]` will build and run the specified day.  You can also use `zig build install_dayXX [target and mode options]` to build the executable for a day and put it into `zig-out/bin` without executing it.  By default this template does not link libc, but you can set `should_link_libc` to `true` in build.zig to change that.  If you add new files with tests, add those files to the list of test files in test_all.zig.  The command `zig build test` will run tests in all of these files.  You can also use `zig build test_dayXX` to run tests in a specific day, or `zig build install_tests_dayXX` to create a debuggable test executable in `zig-out/bin`.
-
-Each day contains a decl like this:
-```zig
-const data = @embedFile("../data/day05.txt");
+### Useful VSCode settings (language-independent)
 ```
-To use this system, save your input for a day in the data/ directory with the appropriate name.  Reference this decl to load the contents of that file as a compile time constant.  If a day has no input, or you prefer not to embed it in this form, simply don't reference this decl.  If `data` is unused, the compiler will not try to load the file, and it won't error if the file does not exist.
+// "Suggestions" pops up a list of completions of the current word as you type.
+// Arguably useful in code; definitely not useful in comments or strings.
+"editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": false
+},
+// Suggestions are also automatically triggered when you type certain trigger characters such as '.' for struct fields.
+// Again, great in code, not so great in comments. Ideally, this would be configurable at the same granularity
+// as editor.quickSuggestions, but the best we can do is just disable it; not having suggestions pop up rampantly while
+// typing comments outweights the convenience of typing "foo." to browse all members of "foo".
+// You can still manually trigger suggestions with Ctrl+Space.
+"editor.suggestOnTriggerCharacters": false,
+// Change multi-cursor mode to my more familiar mode, where holding Alt lets you select in column mode. And Ctrl+click
+// adds multiple cursors, but I don't use that too frequently.
+"editor.multiCursorModifier": "ctrlCmd",
+// Does what it says on the tin.
+"debug.allowBreakpointsEverywhere": true,
+```
 
-This repo also contains Visual Studio Code project files for debugging.  These are meant to work with the C/C++ plugin.  There is a debug configuration for each day.  By default all days are built in debug mode, but this can be changed by editing `.vscode/tasks.json` if you have a need for speed.
+### [Day 1: Calorie Counting](https://adventofcode.com/2022/day/1)
+- Cobweb-clearing
+- Use [`std.BoundedArray`](https://ziglang.org/documentation/master/std/#std;BoundedArray) for alloc-less [`std.ArrayList`](https://ziglang.org/documentation/master/std/#std;BoundedArray) when a max capacity is known at compile time.
+  - Use with `.appendAssumeCapacity()` for bounds-check-free (unsafe!) appending.
+  - No `.deinit()` required
+  - Use `.slice()` and `.constSlice()` for array-like access.
+  - The line count of your `input.txt` file is a great max capacity for AoC problems :)
+- This year, I'm returning `!i64` instead of `i64` from my `part1()` and `part2()` functions. An exception in either case means something
+  has gone wrong. This way there's less hoop-jumping and `catch unreachable`s necessary.
+- `std.mem.tokenize(u8, data, "\r\n")` to get a `TokenIterator` to iterate over lines in text data.
+  `while(iter.next()) |str| {}` to process things from the iterator until it's empty.
+  - But if you need to preserve empty lines in the input, use `std.mem.split(u8, data, "\n")`
+- `std.fmt.parseInt(u8, str, 10)` to convert a string to a base-10 integer.
+  - append `catch unreachable` to an error union to say "this can never fail, just give me the value".
 
-If you would like to contribute project files for other development environments, please send a PR.
 
-## Modifying the template
-
-You can modify the template to add your own changes across all days.  To do so, modify template/template.zig and then run `zig build generate`.  The `$` character in the template will be replaced by the two-digit day number (e.g. 04 or 17).  This step will only overwrite files which have not been modified, so you will not lose work if you update the template after implementing several days.  After updating the template and generating, you should commit the changes to template/hashes.bin in addition to the updated template and source files.  This will ensure that the newly generated files are not considered modified if you update the template again.
-
-## Setting up ZLS
-
-Zig has a reasonably robust language server, which can provide autocomplete for VSCode and many other editors.  It can help significantly with exploring the std lib and suggesting parameter completions.  The VSCode extension (augusterame.zls-vscode) will automatically install the language server in the background.  If you are using a different editor, follow their [install instructions](https://zigtools.github.io/install-zls/).  If you want to install a specific version of the language server (for example for maximum compatibility with 0.10.0), [check their releases page](https://github.com/zigtools/zls/releases) or [follow their instructions to build from source](https://github.com/zigtools/zls#from-source).  Note that ZLS tracks master, so if you are using Zig 0.10.0 you may need to download a newer version to build ZLS.
