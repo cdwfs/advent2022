@@ -20,12 +20,12 @@ const Input = struct {
     }
 };
 
-fn part1(input: Input) i64 {
+fn part1(input: Input) !i64 {
     _ = input;
     return 0;
 }
 
-fn part2(input: Input) i64 {
+fn part2(input: Input) !i64 {
     _ = input;
     return 0;
 }
@@ -44,14 +44,14 @@ fn testPart1(allocator: std.mem.Allocator) !void {
     var test_input = try Input.init(test_data, allocator);
     defer test_input.deinit();
     if (part1_test_solution) |solution| {
-        try std.testing.expectEqual(solution, part1(test_input));
+        try std.testing.expectEqual(solution, try part1(test_input));
     }
 
     var timer = try std.time.Timer.start();
     var input = try Input.init(data, allocator);
     defer input.deinit();
     if (part1_solution) |solution| {
-        try std.testing.expectEqual(solution, part1(input));
+        try std.testing.expectEqual(solution, try part1(input));
         print("part1 took {d:9.3}ms\n", .{@intToFloat(f64, timer.lap()) / 1000000.0});
     }
 }
@@ -60,14 +60,14 @@ fn testPart2(allocator: std.mem.Allocator) !void {
     var test_input = try Input.init(test_data, allocator);
     defer test_input.deinit();
     if (part2_test_solution) |solution| {
-        try std.testing.expectEqual(solution, part2(test_input));
+        try std.testing.expectEqual(solution, try part2(test_input));
     }
 
     var timer = try std.time.Timer.start();
     var input = try Input.init(data, allocator);
     defer input.deinit();
     if (part2_solution) |solution| {
-        try std.testing.expectEqual(solution, part2(input));
+        try std.testing.expectEqual(solution, try part2(input));
         print("part2 took {d:9.3}ms\n", .{@intToFloat(f64, timer.lap()) / 1000000.0});
     }
 }
