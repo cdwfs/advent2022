@@ -32,7 +32,7 @@ A list of the puzzles, and what new language/tool features I learned each day:
 
 ### [Day 1: Calorie Counting](https://adventofcode.com/2022/day/1)
 - Cobweb-clearing
-- Use [`std.BoundedArray`](https://ziglang.org/documentation/master/std/#std;BoundedArray) for alloc-less [`std.ArrayList`](https://ziglang.org/documentation/master/std/#std;BoundedArray) when a max capacity is known at compile time.
+- Use [`std.BoundedArray`](https://ziglang.org/documentation/master/std/#root;BoundedArray) for alloc-less [`std.ArrayList`](https://ziglang.org/documentation/master/std/#root;ArrayList) when a max capacity is known at compile time.
   - Use with `.appendAssumeCapacity()` for bounds-check-free (unsafe!) appending.
   - No `.deinit()` required
   - Use `.slice()` and `.constSlice()` for array-like access.
@@ -44,5 +44,6 @@ A list of the puzzles, and what new language/tool features I learned each day:
   - But if you need to preserve empty lines in the input, use `std.mem.split(u8, data, "\n")`
 - `std.fmt.parseInt(u8, str, 10)` to convert a string to a base-10 integer.
   - append `catch unreachable` to an error union to say "this can never fail, just give me the value".
+- `std.sort.sort(i64, array, {}, comptime std.sort.desc(i64))` to sort a slice in descending order.
 
 
