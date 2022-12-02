@@ -7,7 +7,13 @@
             "label": "build current",
             "type": "shell",
             "command": "zig",
-            "args": ["build", "install_${fileBasenameNoExtension}"], // add -Drelease-safe=true or -Drelease-fast=true to optimize
+            "args": [
+                "build",
+                // To optimize, uncomment one of these:
+                // "-Drelease-safe=true"
+                // "-Drelease-fast=true"
+                "install_${fileBasenameNoExtension}",
+            ],
             "presentation": {
                 "clear": true,
                 "showReuseMessage": false,
@@ -31,7 +37,13 @@
             "label": "test current",
             "type": "shell",
             "command": "zig",
-            "args": ["test", "${file}"], // add -Drelease-safe=true or -Drelease-fast=true to optimize
+            "args": [
+                "test",
+                // To optimize, uncomment one of these:
+                // "-O", "ReleaseSafe",
+                // "-O", "ReleaseFast",
+                "${file}",
+            ],
             "presentation": {
                 "clear": true,
                 "showReuseMessage": false,
@@ -58,7 +70,13 @@
             "label": "test all",
             "type": "shell",
             "command": "zig",
-            "args": ["test", "${workspaceFolder}/src/test_all.zig"], // add -Drelease-safe=true or -Drelease-fast=true to optimize
+            "args": [
+                "test",
+                // To optimize, uncomment one of these:
+                // "-O", "ReleaseSafe",
+                // "-O", "ReleaseFast",
+                "${workspaceFolder}/src/test_all.zig",
+            ],
             "presentation": {
                 "clear": true,
                 "showReuseMessage": false,
@@ -81,28 +99,26 @@
                 "isDefault": true
             }
         },
-        //{
-        //    "label": "build all tests",
-        //    "type": "shell",
-        //    "command": "zig",
-        //    "args": ["build", "install_tests"],
-        //    "problemMatcher": [],
-        //    "group": "build",
-        //},
         {
             "label": "build tests util",
             "type": "shell",
             "command": "zig",
-            "args": ["build", "install_tests_util"],
+            "args": [
+                "build",
+                "install_tests_util"
+            ],
             "problemMatcher": [],
-            "group": "build",
+            "group": "build"
         },
-       {
+        {
             "label": "format",
             "type": "shell",
             "command": "zig",
-            "args": ["fmt", "${file}"],
-            "problemMatcher": [],
-        },
+            "args": [
+                "fmt",
+                "${file}"
+            ],
+            "problemMatcher": []
+        }
     ]
 }
