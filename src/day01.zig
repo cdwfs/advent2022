@@ -25,44 +25,44 @@ const Input = struct {
 };
 
 fn part1(input: Input) !i64 {
-    var currentCalorieCount: i64 = 0;
-    var maxCalorieCount: i64 = -1;
+    var current_calorie_count: i64 = 0;
+    var max_calorie_count: i64 = -1;
     for (input.lines.constSlice()) |line| {
         if (line.len == 0) {
-            if (currentCalorieCount > maxCalorieCount) {
-                maxCalorieCount = currentCalorieCount;
+            if (current_calorie_count > max_calorie_count) {
+                max_calorie_count = current_calorie_count;
             }
-            currentCalorieCount = 0;
+            current_calorie_count = 0;
         } else {
-            currentCalorieCount += try std.fmt.parseInt(i64, line, 10);
+            current_calorie_count += try std.fmt.parseInt(i64, line, 10);
         }
     }
     // Once more for the last elf
-    if (currentCalorieCount > maxCalorieCount) {
-        maxCalorieCount = currentCalorieCount;
+    if (current_calorie_count > max_calorie_count) {
+        max_calorie_count = current_calorie_count;
     }
 
-    return maxCalorieCount;
+    return max_calorie_count;
 }
 
 fn part2(input: Input) !i64 {
-    var elfTotals = try std.BoundedArray(i64, 2500).init(0);
+    var elf_totals = try std.BoundedArray(i64, 2500).init(0);
 
-    var currentCalorieCount: i64 = 0;
+    var current_calorie_count: i64 = 0;
     for (input.lines.constSlice()) |line| {
         if (line.len == 0) {
-            elfTotals.appendAssumeCapacity(currentCalorieCount);
-            currentCalorieCount = 0;
+            elf_totals.appendAssumeCapacity(current_calorie_count);
+            current_calorie_count = 0;
         } else {
-            currentCalorieCount += try std.fmt.parseInt(i64, line, 10);
+            current_calorie_count += try std.fmt.parseInt(i64, line, 10);
         }
     }
     // Once more for the last elf
-    elfTotals.appendAssumeCapacity(currentCalorieCount);
+    elf_totals.appendAssumeCapacity(current_calorie_count);
 
-    var caloriesPerElf = elfTotals.slice();
-    std.sort.sort(i64, caloriesPerElf, {}, comptime std.sort.desc(i64));
-    return caloriesPerElf[0] + caloriesPerElf[1] + caloriesPerElf[2];
+    var calories_per_elf = elf_totals.slice();
+    std.sort.sort(i64, calories_per_elf, {}, comptime std.sort.desc(i64));
+    return calories_per_elf[0] + calories_per_elf[1] + calories_per_elf[2];
 }
 
 const test_data =
