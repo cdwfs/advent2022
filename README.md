@@ -1,5 +1,8 @@
 My [Advent of Code 2022](https://adventofcode.com/2022) solutions, implemented in
 [Zig](https://www.ziglang.org/) and built using [VS Code](https://code.visualstudio.com/).
+They are not pretty. They are not elegant. They probably look like I checked in the very
+first version that produced the correct answer, because that's more or less exactly what I did.
+I'm not here to code-golf.
 
 _Based on the [Zig AoC template](https://github.com/SpexGuy/Zig-AoC-Template) provided by [@SpexGuy](https://github.com/SpexGuy/).
 Instructions to build and extend the template are [here](TEMPLATE.md)._
@@ -52,3 +55,13 @@ A list of the puzzles, and what new language/tool features I learned each day:
 - Enums look like structs. You can give them an ordinal type, and access it with `@enumToInt(MyEnum.Value)`.
 - You can't switch on tuples. I feel like that would've worked in Rust.
 - I _almost_ had a use case for initializing a lookup table using a comptime function, but it was just too easy to do in my head & hard-code the values instead. Maybe next time.
+
+### [Day 3: Rucksack Reorganization](https://adventofcode.com/2022/day/3)
+- Hitting my stride again
+- I'm reminded again that there is no `for(int i=0; i<count; ++i) {}` equivalent in Zig. The closest approximation is
+  `var i:usize = 0; while(i < count) : (i += 1) {}`.
+- Directly manipulating slice lengths was useful here, even if it feels naughty.
+- I hit my first instance of "expression accidentally treated as `comptime`", and had to bust out the `@as(i64, expr)` workaround.
+- To initialize an array to zero: `var array:[256]u8 = [_]u8{0} ** 256;`
+- The ternary operator looks like `var foo = if (condition) a else b;`
+- [`std.StaticBitSet()`](https://ziglang.org/documentation/master/std/#root;StaticBitSet) for efficient bitsets of any size, automatically routing to either a single-int or array-based implementation.

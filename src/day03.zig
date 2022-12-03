@@ -2,16 +2,31 @@ const std = @import("std");
 const util = @import("util.zig");
 const data = @embedFile("data/day03.txt");
 
+const Rucksack = struct {
+    compartments: [2][]const u8,
+};
+
 const Input = struct {
     allocator: std.mem.Allocator,
+    rucksacks: std.BoundedArray(Rucksack, 300),
 
     pub fn init(input_text: []const u8, allocator: std.mem.Allocator) !@This() {
         var lines = std.mem.tokenize(u8, input_text, "\r\n");
-        _ = lines;
         var input = Input{
             .allocator = allocator,
+            .rucksacks = try std.BoundedArray(Rucksack, 300).init(0),
         };
         errdefer input.deinit();
+
+        while (lines.next()) |line| {
+            assert(line.len % 2 == 0);
+            input.rucksacks.appendAssumeCapacity(Rucksack{
+                .compartments = .{
+                    line[0 .. line.len / 2],
+                    line[line.len / 2 .. line.len],
+                },
+            });
+        }
 
         return input;
     }
@@ -21,22 +36,69 @@ const Input = struct {
 };
 
 fn part1(input: Input) !i64 {
-    _ = input;
-    return 0;
+    var priority_sum: i64 = 0;
+    for (input.rucksacks.constSlice()) |sack| {
+        var items_in_comp1 = std.StaticBitSet(256).initEmpty();
+        for (sack.compartments[0]) |item| {
+            items_in_comp1.set(item);
+        }
+        for (sack.compartments[1]) |item| {
+            if (items_in_comp1.isSet(item)) {
+                priority_sum += if (item <= 'Z')
+                    @as(i64, item - 'A' + 27)
+                else
+                    @as(i64, item - 'a' + 1);
+                break;
+            }
+        }
+    }
+    return priority_sum;
 }
 
 fn part2(input: Input) !i64 {
-    _ = input;
-    return 0;
+    var priority_sum: i64 = 0;
+    var i: usize = 0;
+    const sacks = input.rucksacks.constSlice();
+    while (i < sacks.len) : (i += 3) {
+        var items_in_sack1 = std.StaticBitSet(256).initEmpty();
+        var items_in_sack2 = std.StaticBitSet(256).initEmpty();
+        var sack1_items = sacks[i + 0].compartments[0];
+        var sack2_items = sacks[i + 1].compartments[0];
+        var sack3_items = sacks[i + 2].compartments[0];
+        sack1_items.len *= 2;
+        sack2_items.len *= 2;
+        sack3_items.len *= 2;
+        for (sack1_items) |item| {
+            items_in_sack1.set(item);
+        }
+        for (sack2_items) |item| {
+            items_in_sack2.set(item);
+        }
+        for (sack3_items) |item| {
+            if (items_in_sack1.isSet(item) and items_in_sack2.isSet(item)) {
+                priority_sum += if (item <= 'Z')
+                    @as(i64, item - 'A' + 27)
+                else
+                    @as(i64, item - 'a' + 1);
+                break;
+            }
+        }
+    }
+    return priority_sum;
 }
 
 const test_data =
-    \\test data here
+    \\vJrwpWtwJgWrhcsFMMfFFhFp
+    \\jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
+    \\PmmdzqPrVvPwwTWBwg
+    \\wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
+    \\ttgJtRGJQctTZtZT
+    \\CrZsJsPPZsGzwwsLwLmpwMDw
 ;
-const part1_test_solution: ?i64 = null;
-const part1_solution: ?i64 = null;
-const part2_test_solution: ?i64 = null;
-const part2_solution: ?i64 = null;
+const part1_test_solution: ?i64 = 157;
+const part1_solution: ?i64 = 8053;
+const part2_test_solution: ?i64 = 70;
+const part2_solution: ?i64 = 2425;
 
 // Just boilerplate below here, nothing to see
 
