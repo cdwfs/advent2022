@@ -2,16 +2,34 @@ const std = @import("std");
 const util = @import("util.zig");
 const data = @embedFile("data/day04.txt");
 
+const RangePair = struct {
+    min0: i164,
+    max0: i164,
+    min1: i164,
+    max1: i164,
+};
+
 const Input = struct {
     allocator: std.mem.Allocator,
+    range_pairs: std.BoundedArray(RangePair, 1000),
 
     pub fn init(input_text: []const u8, allocator: std.mem.Allocator) !@This() {
         var lines = std.mem.tokenize(u8, input_text, "\r\n");
-        _ = lines;
         var input = Input{
             .allocator = allocator,
+            .range_pairs = try std.BoundedArray(RangePair, 1000).init(0),
         };
         errdefer input.deinit();
+
+        while (lines.next()) |line| {
+            var nums = std.mem.tokenize(u8, line, "-,");
+            input.range_pairs.appendAssumeCapacity(RangePair{
+                .min0 = try std.fmt.parseInt(u8, nums.next().?, 10),
+                .max0 = try std.fmt.parseInt(u8, nums.next().?, 10),
+                .min1 = try std.fmt.parseInt(u8, nums.next().?, 10),
+                .max1 = try std.fmt.parseInt(u8, nums.next().?, 10),
+            });
+        }
 
         return input;
     }
@@ -21,22 +39,47 @@ const Input = struct {
 };
 
 fn part1(input: Input) !i64 {
-    _ = input;
-    return 0;
+    var count: i64 = 0;
+    for (input.range_pairs.constSlice()) |range_pair| {
+        if ((range_pair.min0 >= range_pair.min1 and range_pair.max0 <= range_pair.max1) or
+            (range_pair.min1 >= range_pair.min0 and range_pair.max1 <= range_pair.max0))
+        {
+            count += 1;
+        }
+    }
+    return count;
 }
 
 fn part2(input: Input) !i64 {
-    _ = input;
-    return 0;
+    var count: i64 = 0;
+    for (input.range_pairs.constSlice()) |range_pair| {
+        // Checking for overlapping ranges is simpler than testing for range subsets :)
+        // The ranges don't overlap if either min is greater than the other max
+        //   overlaps = !((min0 > max1) or (min1 > max0))
+        // A>B is equivalent to !(A<=B)
+        //   overlaps = !(!(min0 <= max1) or !(min1 <= max0))
+        // By DeMorgan's Law, !(!A || !B) is equivalent to A && B
+        //   overlaps = (min0 <= max1 and min1 <= max0)
+        if (range_pair.min0 <= range_pair.max1 and range_pair.min1 <= range_pair.max0)
+        {
+            count += 1;
+        }
+    }
+    return count;
 }
 
 const test_data =
-    \\test data here
+    \\2-4,6-8
+    \\2-3,4-5
+    \\5-7,7-9
+    \\2-8,3-7
+    \\6-6,4-6
+    \\2-6,4-8
 ;
-const part1_test_solution: ?i64 = null;
-const part1_solution: ?i64 = null;
-const part2_test_solution: ?i64 = null;
-const part2_solution: ?i64 = null;
+const part1_test_solution: ?i64 = 2;
+const part1_solution: ?i64 = 540;
+const part2_test_solution: ?i64 = 4;
+const part2_solution: ?i64 = 872;
 
 // Just boilerplate below here, nothing to see
 

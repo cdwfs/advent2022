@@ -65,3 +65,6 @@ A list of the puzzles, and what new language/tool features I learned each day:
 - To initialize an array to zero: `var array:[256]u8 = [_]u8{0} ** 256;`
 - The ternary operator looks like `var foo = if (condition) a else b;`
 - [`std.StaticBitSet()`](https://ziglang.org/documentation/master/std/#root;StaticBitSet) for efficient bitsets of any size, automatically routing to either a single-int or array-based implementation.
+
+### [Day 4: Camp Cleanup](https://adventofcode.com/2022/day/4)
+- Nothing new today, really. That wasn't so bad.
