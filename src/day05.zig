@@ -59,7 +59,7 @@ const Input = struct {
     }
 };
 
-fn part1(input: Input, output:*std.BoundedArray(u8,256)) !void {
+fn part1(input: Input, output:*part1_solution_type) !void {
     // create mutable stacks
     var stacks:@TypeOf(input.initial_stacks) = undefined;
     for(input.initial_stacks) |in_stack,i| {
@@ -78,7 +78,7 @@ fn part1(input: Input, output:*std.BoundedArray(u8,256)) !void {
     }
 }
 
-fn part2(input: Input, output:*std.BoundedArray(u8,256)) !void {
+fn part2(input: Input, output:*part2_solution_type) !void {
     // create mutable stacks
     var stacks:@TypeOf(input.initial_stacks) = undefined;
     for(input.initial_stacks) |in_stack,i| {
@@ -115,6 +115,9 @@ const part2_solution: ?[]const u8 = "GCFGLDNJZ";
 
 // Just boilerplate below here, nothing to see
 
+const part1_solution_type = if (@TypeOf(part1_test_solution) == ?[]const u8) std.BoundedArray(u8,256) else i64;
+const part2_solution_type = if (@TypeOf(part2_test_solution) == ?[]const u8) std.BoundedArray(u8,256) else i64;
+
 fn testPart1(allocator: std.mem.Allocator) !void {
     if (part1_test_solution == null and part1_solution == null)
         return error.SkipZigTest;
@@ -122,18 +125,36 @@ fn testPart1(allocator: std.mem.Allocator) !void {
     var test_input = try Input.init(test_data, allocator);
     defer test_input.deinit();
     if (part1_test_solution) |expected_solution| {
-        var actual_solution = try std.BoundedArray(u8,256).init(0);
-        try part1(test_input, &actual_solution);
-        try std.testing.expectEqualStrings(expected_solution, actual_solution.constSlice());
+        if (part1_solution_type == std.BoundedArray(u8,256))
+        {
+            var actual_solution = try std.BoundedArray(u8,256).init(0);
+            try part1(test_input, &actual_solution);
+            try std.testing.expectEqualStrings(expected_solution, actual_solution.constSlice());
+        }
+        else
+        {
+            var actual_solution:i64 = 0;
+            try part1(test_input, &actual_solution);
+            try std.testing.expectEqual(expected_solution, actual_solution);
+        }
     }
 
     var timer = try std.time.Timer.start();
     var input = try Input.init(data, allocator);
     defer input.deinit();
     if (part1_solution) |expected_solution| {
-        var actual_solution = try std.BoundedArray(u8,256).init(0);
-        try part1(input, &actual_solution);
-        try std.testing.expectEqualStrings(expected_solution, actual_solution.constSlice());
+        if (part1_solution_type == std.BoundedArray(u8,256))
+        {
+            var actual_solution = try std.BoundedArray(u8,256).init(0);
+            try part1(input, &actual_solution);
+            try std.testing.expectEqualStrings(expected_solution, actual_solution.constSlice());
+        }
+        else
+        {
+            var actual_solution:i64 = 0;
+            try part1(input, &actual_solution);
+            try std.testing.expectEqual(expected_solution, actual_solution);
+        }
         print("part1 took {d:9.3}ms\n", .{@intToFloat(f64, timer.lap()) / 1000000.0});
     }
 }
@@ -145,18 +166,36 @@ fn testPart2(allocator: std.mem.Allocator) !void {
     var test_input = try Input.init(test_data, allocator);
     defer test_input.deinit();
     if (part2_test_solution) |expected_solution| {
-        var actual_solution = try std.BoundedArray(u8,256).init(0);
-        try part2(test_input, &actual_solution);
-        try std.testing.expectEqualStrings(expected_solution, actual_solution.constSlice());
+        if (part2_solution_type == std.BoundedArray(u8,256))
+        {
+            var actual_solution = try std.BoundedArray(u8,256).init(0);
+            try part2(test_input, &actual_solution);
+            try std.testing.expectEqualStrings(expected_solution, actual_solution.constSlice());
+        }
+        else
+        {
+            var actual_solution:i64 = 0;
+            try part2(test_input, &actual_solution);
+            try std.testing.expectEqual(expected_solution, actual_solution);
+        }
     }
 
     var timer = try std.time.Timer.start();
     var input = try Input.init(data, allocator);
     defer input.deinit();
     if (part2_solution) |expected_solution| {
-        var actual_solution = try std.BoundedArray(u8,256).init(0);
-        try part2(input, &actual_solution);
-        try std.testing.expectEqualStrings(expected_solution, actual_solution.constSlice());
+        if (part2_solution_type == std.BoundedArray(u8,256))
+        {
+            var actual_solution = try std.BoundedArray(u8,256).init(0);
+            try part2(input, &actual_solution);
+            try std.testing.expectEqualStrings(expected_solution, actual_solution.constSlice());
+        }
+        else
+        {
+            var actual_solution:i64 = 0;
+            try part2(input, &actual_solution);
+            try std.testing.expectEqual(expected_solution, actual_solution);
+        }
         print("part2 took {d:9.3}ms\n", .{@intToFloat(f64, timer.lap()) / 1000000.0});
     }
 }
