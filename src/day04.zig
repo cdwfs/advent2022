@@ -3,10 +3,10 @@ const util = @import("util.zig");
 const data = @embedFile("data/day04.txt");
 
 const RangePair = struct {
-    min0: i164,
-    max0: i164,
-    min1: i164,
-    max1: i164,
+    min0: u8,
+    max0: u8,
+    min1: u8,
+    max1: u8,
 };
 
 const Input = struct {
