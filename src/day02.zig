@@ -42,7 +42,7 @@ const result_scores: [9]i64 = .{
     0, 3, 6, // P/R, P,P, P/S
     6, 0, 3, // S/R, S/P, S/S
 };
-fn part1(input: Input) !i64 {
+fn part1(input: Input, output: *output_type) !void {
     var total_score: i64 = 0;
     const opponent_move_map: [3]Move = .{ Move.R, Move.P, Move.S };
     const my_move_map: [3]Move = .{ Move.R, Move.P, Move.S };
@@ -51,7 +51,7 @@ fn part1(input: Input) !i64 {
         const my_move = my_move_map[round.my_move_code];
         total_score += move_scores[@enumToInt(my_move)] + result_scores[@enumToInt(opponent_move) * 3 + @enumToInt(my_move)];
     }
-    return total_score;
+    output.* = total_score;
 }
 
 const move_for_result: [9]Move = .{
@@ -60,7 +60,7 @@ const move_for_result: [9]Move = .{
     Move.P, Move.S, Move.R, // S/L, S/D, S/W
 };
 
-fn part2(input: Input) !i64 {
+fn part2(input: Input, output: *output_type) !void {
     var total_score: i64 = 0;
     const opponent_move_map: [3]Move = .{ Move.R, Move.P, Move.S };
     for (input.rounds.constSlice()) |round| {
@@ -69,7 +69,7 @@ fn part2(input: Input) !i64 {
         const my_move = move_for_result[@enumToInt(opponent_move) * 3 + desired_result];
         total_score += move_scores[@enumToInt(my_move)] + result_scores[@enumToInt(opponent_move) * 3 + @enumToInt(my_move)];
     }
-    return total_score;
+    output.* = total_score;
 }
 
 const test_data =
@@ -84,82 +84,51 @@ const part2_solution: ?i64 = 12014;
 
 // Just boilerplate below here, nothing to see
 
-fn testPart1(allocator: std.mem.Allocator) !void {
-    var test_input = try Input.init(test_data, allocator);
-    defer test_input.deinit();
-    if (part1_test_solution) |solution| {
-        try std.testing.expectEqual(solution, try part1(test_input));
-    }
+const solution_type: type = @TypeOf(part1_test_solution);
+const output_type: type = if (solution_type == ?[]const u8) std.BoundedArray(u8, 256) else i64;
+
+fn aocTestSolution(
+    func: *const fn (input: Input, output: *output_type) anyerror!void,
+    input_text: []const u8,
+    expected_solution: solution_type,
+    allocator: std.mem.Allocator,
+) !void {
+    const expected = expected_solution orelse return error.SkipZigTest;
 
     var timer = try std.time.Timer.start();
-    var input = try Input.init(data, allocator);
+    var input = try Input.init(input_text, allocator);
     defer input.deinit();
-    if (part1_solution) |solution| {
-        try std.testing.expectEqual(solution, try part1(input));
-        print("part1 took {d:9.3}ms\n", .{@intToFloat(f64, timer.lap()) / 1000000.0});
+    if (output_type == std.BoundedArray(u8, 256)) {
+        var actual = try std.BoundedArray(u8, 256).init(0);
+        try func(input, &actual);
+        try std.testing.expectEqualStrings(expected, actual.constSlice());
+    } else {
+        var actual: i64 = 0;
+        try func(input, &actual);
+        try std.testing.expectEqual(expected, actual);
     }
-}
-
-fn testPart2(allocator: std.mem.Allocator) !void {
-    var test_input = try Input.init(test_data, allocator);
-    defer test_input.deinit();
-    if (part2_test_solution) |solution| {
-        try std.testing.expectEqual(solution, try part2(test_input));
-    }
-
-    var timer = try std.time.Timer.start();
-    var input = try Input.init(data, allocator);
-    defer input.deinit();
-    if (part2_solution) |solution| {
-        try std.testing.expectEqual(solution, try part2(input));
-        print("part2 took {d:9.3}ms\n", .{@intToFloat(f64, timer.lap()) / 1000000.0});
-    }
+    std.debug.print("{d:9.3}ms\n", .{@intToFloat(f64, timer.lap()) / 1000000.0});
 }
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
     const allocator = arena.allocator();
-    try testPart1(allocator);
-    try testPart2(allocator);
+    try aocTestSolution(part1, test_data, part1_test_solution, allocator);
+    try aocTestSolution(part1, data, part1_solution, allocator);
+    try aocTestSolution(part2, test_data, part2_test_solution, allocator);
+    try aocTestSolution(part2, data, part2_solution, allocator);
 }
 
-test "day02_part1" {
-    try testPart1(std.testing.allocator);
+test "day05_part1" {
+    try aocTestSolution(part1, test_data, part1_test_solution, std.testing.allocator);
+    try aocTestSolution(part1, data, part1_solution, std.testing.allocator);
 }
 
-test "day02_part2" {
-    try testPart2(std.testing.allocator);
+test "day05_part2" {
+    try aocTestSolution(part2, test_data, part2_test_solution, std.testing.allocator);
+    try aocTestSolution(part2, data, part2_solution, std.testing.allocator);
 }
-
-// Useful stdlib functions
-const tokenize = std.mem.tokenize;
-const split = std.mem.split;
-const indexOf = std.mem.indexOfScalar;
-const indexOfAny = std.mem.indexOfAny;
-const indexOfStr = std.mem.indexOfPosLinear;
-const lastIndexOf = std.mem.lastIndexOfScalar;
-const lastIndexOfAny = std.mem.lastIndexOfAny;
-const lastIndexOfStr = std.mem.lastIndexOfLinear;
-const trim = std.mem.trim;
-const sliceMin = std.mem.min;
-const sliceMax = std.mem.max;
-
-const parseInt = std.fmt.parseInt;
-const parseFloat = std.fmt.parseFloat;
-
-const min = std.math.min;
-const min3 = std.math.min3;
-const max = std.math.max;
-const max3 = std.math.max3;
-
-const print = std.debug.print;
-const expect = std.testing.expect;
-const assert = std.debug.assert;
-
-const sort = std.sort.sort;
-const asc = std.sort.asc;
-const desc = std.sort.desc;
 
 // Generated from template/template.zig.
 // Run `zig build generate` to update.
