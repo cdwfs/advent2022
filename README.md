@@ -79,3 +79,5 @@ A list of the puzzles, and what new language/tool features I learned each day:
   But `std.mem.split()` gives you empty ranges, while `std.mem.tokenize()` quietly skips right over them.
   - I should add a function to util.zig that scans the input and returns the appropriate EOL delimiter
 
+### [Day 6: Tuning Trouble](https://adventofcode.com/2022/day/6)
+- Brute-forced it with bit sets as a first pass.
