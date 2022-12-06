@@ -68,3 +68,14 @@ A list of the puzzles, and what new language/tool features I learned each day:
 
 ### [Day 4: Camp Cleanup](https://adventofcode.com/2022/day/4)
 - Nothing new today, really. That wasn't so bad.
+
+### [Day 5: Supply Stacks](https://adventofcode.com/2022/day/5)
+- Oh, now solutions can be strings? I'll have to update the template to accomodate that!
+- Some functions that might be useful for parsing: `std.mem.sliceBackwards()`, the `.rest()` method on a slice iterator
+  (returns the entire remainder of the slice), `std.mem.reverse()`.
+- Line endings are a pain. The `dayNN.txt` files I save use `\r\n` endings, but the unit test input I embed in my source
+  code just uses `\n`. `std.mem.tokenize()` is fine with this, since it takes a _set_ of delimiters and splits by any number
+  of any of them in a row. `std.mem.split()` is _not_ fine with this; it takes a specific byte sequence as a delimiter.
+  But `std.mem.split()` gives you empty ranges, while `std.mem.tokenize()` quietly skips right over them.
+  - I should add a function to util.zig that scans the input and returns the appropriate EOL delimiter
+
