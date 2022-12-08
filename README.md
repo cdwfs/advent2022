@@ -81,3 +81,10 @@ A list of the puzzles, and what new language/tool features I learned each day:
 
 ### [Day 6: Tuning Trouble](https://adventofcode.com/2022/day/6)
 - Brute-forced it with bit sets as a first pass.
+
+### [Day 7: No Space Left On Device](https://adventofcode.com/2022/day/7)
+- Function pointer syntax [changed](https://ziglang.org/download/0.10.0/release-notes.html#Function-Pointers) in Zig 0.10.0, but only for the self-hosting/stage2 compiler. And this framework still uses stage1. Left myself a TODO to fix later.
+- My initial pass tried to store lists of pointers-to-`*Dir`/`*File` at each directory, but I guess that means I'd need an "init this memory in-place as a `Dir`/`File` method? I just stuck to lists of `Dir`/`File` values instead, but this feels like a weak point I should revisit.
+- In retrospect, I could have used `std.StringHashMap` to store the dirs/files at each level instead of a flat list. It would've made the code a bit cleaner, but probably not any faster.
+  - 3x slower, in fact! And not _that_ much simpler.
+- It turns out I don't remember how to actually return an error when an error occurs. I should fix that.
