@@ -88,3 +88,7 @@ A list of the puzzles, and what new language/tool features I learned each day:
 - In retrospect, I could have used `std.StringHashMap` to store the dirs/files at each level instead of a flat list. It would've made the code a bit cleaner, but probably not any faster.
   - 3x slower, in fact! And not _that_ much simpler.
 - It turns out I don't remember how to actually return an error when an error occurs. I should fix that.
+
+### [Day 8: Treetop Tree House](https://adventofcode.com/2022/day/8)
+- Virtually all my bugs today were related to forgetting to re-initialize loop indices to zero before the loop. Let's make a range utility.
+- Fixed-size 2D arrays plus a `dim_x`/`dim_y` parameter seemed to work just fine.
