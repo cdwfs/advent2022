@@ -41,14 +41,13 @@ fn part1(input: Input, output: *output_type) !void {
     }
     var visibleCount: i64 = 0;
 
-    var x: usize = 0;
-    var y: usize = 0;
     // find visibles in each row
-    while (y < input.dim_y) : (y += 1) {
+    var y_range = util.range(usize, .{.end=input.dim_y});
+    while (y_range.next()) |y| {
         var maxh: u8 = 0;
         //std.debug.print("checking row {d}...\n", .{y});
-        x = 0;
-        while (x < input.dim_x) : (x += 1) {
+        var x_range = util.range(usize, .{.end=input.dim_x});
+        while (x_range.next()) |x| {
             const h = input.heights[y][x];
             if (h > maxh) {
                 maxh = h;
@@ -61,9 +60,9 @@ fn part1(input: Input, output: *output_type) !void {
         }
         // count again in the opposite direction
         maxh = 0;
-        x = input.dim_x - 1;
         //std.debug.print("reverse-checking row {d}...\n", .{y});
-        while (x > 0 and x < input.dim_x) : (x -%= 1) {
+        x_range = util.range(usize, .{.start=input.dim_x-1, .end=0, .step=-1});
+        while (x_range.next()) |x| {
             const h = input.heights[y][x];
             if (h > maxh) {
                 maxh = h;
@@ -75,13 +74,13 @@ fn part1(input: Input, output: *output_type) !void {
             }
         }
     }
-    x = 0;
     // find visibles in each column
-    while (x < input.dim_x) : (x += 1) {
+    var x_range = util.range(usize, .{.end=input.dim_x});
+    while (x_range.next()) |x| {
         var maxh: u8 = 0;
         //std.debug.print("checking column {d}...\n", .{x});
-        y = 0;
-        while (y < input.dim_y) : (y += 1) {
+        y_range = util.range(usize, .{.end=input.dim_y});
+        while (y_range.next()) |y| {
             const h = input.heights[y][x];
             if (h > maxh) {
                 maxh = h;
@@ -94,9 +93,9 @@ fn part1(input: Input, output: *output_type) !void {
         }
         // count again in the opposite direction
         maxh = 0;
-        y = input.dim_y - 1;
         //std.debug.print("reverse-checking column {d}...\n", .{x});
-        while (y > 0 and y < input.dim_y) : (y -%= 1) {
+        y_range = util.range(usize, .{.start=input.dim_y-1, .end=0, .step=-1});
+        while (y_range.next()) |y| {
             const h = input.heights[y][x];
             if (h > maxh) {
                 maxh = h;
