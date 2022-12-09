@@ -92,3 +92,8 @@ A list of the puzzles, and what new language/tool features I learned each day:
 ### [Day 8: Treetop Tree House](https://adventofcode.com/2022/day/8)
 - Virtually all my bugs today were related to forgetting to re-initialize loop indices to zero before the loop. Let's make a range utility.
 - Fixed-size 2D arrays plus a `dim_x`/`dim_y` parameter seemed to work just fine.
+
+### [Day 9: Rope Bridge](https://adventofcode.com/2022/day/9)
+- `std.AutoArrayHashMap` with a `void` key type was a perfectly reasonable hash set.
+  - ...but `std.AutoHashMap` with a more aggressive max capacity ran about twice as fast!
+  - I wonder if I could do better with a custom hash function?
