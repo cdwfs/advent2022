@@ -44,9 +44,14 @@ const part2_solution: ?[]const u8 = null;
 
 const solution_type: type = @TypeOf(part1_test_solution);
 const output_type: type = if (solution_type == ?[]const u8) std.BoundedArray(u8, 256) else i64;
+// TODO: in Zig 0.10.0 on the self-hosting compiler, function pointer types must be
+// `*const fn(blah) void` instead of just `fn(blah) void`. But this AoC framework still uses stage1
+// to avoid a bug with bitsets. For more info:
+// https://ziglang.org/download/0.10.0/release-notes.html#Function-Pointers
+const func_type: type = fn (input: Input, output: *output_type) anyerror!void;
 
 fn aocTestSolution(
-    func: *const fn (input: Input, output: *output_type) anyerror!void,
+    comptime func: func_type,
     input_text: []const u8,
     expected_solution: solution_type,
     allocator: std.mem.Allocator,
