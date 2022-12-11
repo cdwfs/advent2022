@@ -7,7 +7,8 @@ const Input = struct {
     // more fields here
 
     pub fn init(input_text: []const u8, allocator: std.mem.Allocator) !@This() {
-        var lines = std.mem.tokenize(u8, input_text, "\r\n");
+        const eol = util.getLineEnding(input_text).?;
+        var lines = std.mem.tokenize(u8, input_text, eol);
         var input = Input{
             .allocator = allocator,
             // fields init here
