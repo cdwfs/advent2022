@@ -2,19 +2,35 @@ const std = @import("std");
 const util = @import("util.zig");
 const data = @embedFile("data/day10.txt");
 
+const Instruction = union(enum) {
+    noop: void,
+    addx: Addx,
+
+    const Addx = struct {
+        arg:i64,
+    };
+};
+
 const Input = struct {
     allocator: std.mem.Allocator,
-    // more fields here
+    instructions: std.BoundedArray(Instruction,150),
 
     pub fn init(input_text: []const u8, allocator: std.mem.Allocator) !@This() {
-        var lines = std.mem.tokenize(u8, input_text, "\r\n");
+        const eol = util.getLineEnding(input_text).?;
+        var lines = std.mem.tokenize(u8, input_text, eol);
         var input = Input{
             .allocator = allocator,
-            // fields init here
+            .instructions = try std.BoundedArray(Instruction,150).init(0),
         };
         errdefer input.deinit();
 
-        _ = lines; // parse input here
+        while(lines.next()) |line| {
+            const inst = if (line[0] == 'n')
+                Instruction{.noop = {}}
+            else
+                Instruction{.addx = Instruction.Addx{.arg = try std.fmt.parseInt(i64, line[5..], 10)}};
+            input.instructions.appendAssumeCapacity(inst);
+        }
         return input;
     }
     pub fn deinit(self: @This()) void {
@@ -23,22 +39,218 @@ const Input = struct {
 };
 
 fn part1(input: Input, output: *output_type) !void {
-    _ = input;
-    _ = output;
+    var x:i64 = 1;
+    var t:i64 = 0;
+    var threshold:i64 = 20;
+    var result:i64 = 0;
+    for(input.instructions.constSlice()) |inst| {
+        switch(inst) {
+            .noop => t += 1,
+            .addx => t += 2,
+        }
+        if (t >= threshold) {
+            const signal_strength = threshold * x;
+            result += signal_strength;
+            threshold += 40;
+            if (threshold > 220)
+                break;
+        }
+        switch(inst) {
+            .noop => {},
+            .addx => |addx| x += addx.arg,
+        }
+    }
+    output.* = result;
+}
+
+fn drawPixel(x:i64,t:i64) void {
+    const px:i64 = @mod(t, 40);
+    if (px == 0)
+        std.debug.print("\n", .{});
+    const d:i64 = std.math.absInt(px-x) catch unreachable;
+    const c:u8 = if (d <= 1) '#' else '.';
+    std.debug.print("{c}", .{c});
 }
 
 fn part2(input: Input, output: *output_type) !void {
-    _ = input;
-    _ = output;
+    var x:i64 = 1;
+    var t:i64 = 0;
+    for(input.instructions.constSlice()) |inst| {
+        switch(inst) {
+            .noop => {
+                drawPixel(x,t);
+                t += 1;
+            },
+            .addx => {
+                drawPixel(x,t);
+                t += 1;
+                drawPixel(x,t);
+                t += 1;
+            },
+        }
+        if (t >= 240) {
+            break;
+        }
+        switch(inst) {
+            .noop => {},
+            .addx => |addx| x += addx.arg,
+        }
+    }
+    output.* = -1;
 }
 
 const test_data =
-    \\test input data goes here
+    \\addx 15
+    \\addx -11
+    \\addx 6
+    \\addx -3
+    \\addx 5
+    \\addx -1
+    \\addx -8
+    \\addx 13
+    \\addx 4
+    \\noop
+    \\addx -1
+    \\addx 5
+    \\addx -1
+    \\addx 5
+    \\addx -1
+    \\addx 5
+    \\addx -1
+    \\addx 5
+    \\addx -1
+    \\addx -35
+    \\addx 1
+    \\addx 24
+    \\addx -19
+    \\addx 1
+    \\addx 16
+    \\addx -11
+    \\noop
+    \\noop
+    \\addx 21
+    \\addx -15
+    \\noop
+    \\noop
+    \\addx -3
+    \\addx 9
+    \\addx 1
+    \\addx -3
+    \\addx 8
+    \\addx 1
+    \\addx 5
+    \\noop
+    \\noop
+    \\noop
+    \\noop
+    \\noop
+    \\addx -36
+    \\noop
+    \\addx 1
+    \\addx 7
+    \\noop
+    \\noop
+    \\noop
+    \\addx 2
+    \\addx 6
+    \\noop
+    \\noop
+    \\noop
+    \\noop
+    \\noop
+    \\addx 1
+    \\noop
+    \\noop
+    \\addx 7
+    \\addx 1
+    \\noop
+    \\addx -13
+    \\addx 13
+    \\addx 7
+    \\noop
+    \\addx 1
+    \\addx -33
+    \\noop
+    \\noop
+    \\noop
+    \\addx 2
+    \\noop
+    \\noop
+    \\noop
+    \\addx 8
+    \\noop
+    \\addx -1
+    \\addx 2
+    \\addx 1
+    \\noop
+    \\addx 17
+    \\addx -9
+    \\addx 1
+    \\addx 1
+    \\addx -3
+    \\addx 11
+    \\noop
+    \\noop
+    \\addx 1
+    \\noop
+    \\addx 1
+    \\noop
+    \\noop
+    \\addx -13
+    \\addx -19
+    \\addx 1
+    \\addx 3
+    \\addx 26
+    \\addx -30
+    \\addx 12
+    \\addx -1
+    \\addx 3
+    \\addx 1
+    \\noop
+    \\noop
+    \\noop
+    \\addx -9
+    \\addx 18
+    \\addx 1
+    \\addx 2
+    \\noop
+    \\noop
+    \\addx 9
+    \\noop
+    \\noop
+    \\noop
+    \\addx -1
+    \\addx 2
+    \\addx -37
+    \\addx 1
+    \\addx 3
+    \\noop
+    \\addx 15
+    \\addx -21
+    \\addx 22
+    \\addx -6
+    \\addx 1
+    \\noop
+    \\addx 2
+    \\addx 1
+    \\noop
+    \\addx -10
+    \\noop
+    \\noop
+    \\addx 20
+    \\addx 1
+    \\addx 2
+    \\addx 2
+    \\addx -6
+    \\addx -11
+    \\noop
+    \\noop
+    \\noop
 ;
-const part1_test_solution: ?[]const u8 = null;
-const part1_solution: ?[]const u8 = null;
-const part2_test_solution: ?[]const u8 = null;
-const part2_solution: ?[]const u8 = null;
+const part1_test_solution: ?i64 = 13140;
+const part1_solution: ?i64 = 13740;
+const part2_test_solution: ?i64 = -1;
+const part2_solution: ?i64 = -1; // ZUPRFECL
 
 // Just boilerplate below here, nothing to see
 

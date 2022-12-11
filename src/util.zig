@@ -10,7 +10,13 @@ var gpa_impl = std.heap.GeneralPurposeAllocator(.{}){};
 pub const gpa = gpa_impl.allocator();
 
 // Add utility functions here
-
+pub fn getLineEnding(text:[] const u8) ?[] const u8 {
+    if (std.ascii.indexOfIgnoreCasePos(text, 0, "\n")) |index| {
+        return if (index > 0 and text[index-1] == '\r') "\r\n" else "\n";
+    } else {
+        return null;
+    }
+}
 
 // Useful stdlib functions
 const tokenize = std.mem.tokenize;

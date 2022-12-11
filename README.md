@@ -97,3 +97,7 @@ A list of the puzzles, and what new language/tool features I learned each day:
 - `std.AutoArrayHashMap` with a `void` key type was a perfectly reasonable hash set.
   - ...but `std.AutoHashMap` with a more aggressive max capacity ran about twice as fast!
   - I wonder if I could do better with a custom hash function?
+
+### [Day 10: Cathode-Ray Tube](https://adventofcode.com/2022/day/10)
+- I made a [tagged union](https://ziglang.org/documentation/0.10.0/#Tagged-union)!
+- I wrote a quick utility to find the EOL character(s) for a given block of text, which should help me work around the LF/CRLF issues from day 5.
