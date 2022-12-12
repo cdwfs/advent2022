@@ -2,20 +2,43 @@ const std = @import("std");
 const util = @import("util.zig");
 const data = @embedFile("data/day12.txt");
 
+const Vec2 = struct {
+    x: usize,
+    y: usize,
+};
+
 const Input = struct {
     allocator: std.mem.Allocator,
-    // more fields here
+    heightfield: [66][66]u8,
+    dim: Vec2,
+    start: Vec2,
+    goal: Vec2,
 
     pub fn init(input_text: []const u8, allocator: std.mem.Allocator) !@This() {
         const eol = util.getLineEnding(input_text).?;
         var lines = std.mem.tokenize(u8, input_text, eol);
         var input = Input{
             .allocator = allocator,
-            // fields init here
+            .heightfield = undefined,
+            .dim = Vec2{ .x = 0, .y = 0 },
+            .start = Vec2{ .x = 0, .y = 0 },
+            .goal = Vec2{ .x = 0, .y = 0 },
         };
         errdefer input.deinit();
 
-        _ = lines; // parse input here
+        while (lines.next()) |line| {
+            input.dim.x = line.len;
+            std.mem.copy(u8, &input.heightfield[input.dim.y], line);
+            if (std.mem.indexOf(u8, line, "S")) |x| {
+                input.start = Vec2{ .x = x, .y = input.dim.y };
+                input.heightfield[input.dim.y][x] = 'a';
+            }
+            if (std.mem.indexOf(u8, line, "E")) |x| {
+                input.goal = Vec2{ .x = x, .y = input.dim.y };
+                input.heightfield[input.dim.y][x] = 'z';
+            }
+            input.dim.y += 1;
+        }
         return input;
     }
     pub fn deinit(self: @This()) void {
@@ -23,23 +46,110 @@ const Input = struct {
     }
 };
 
+const UNVISITED: i64 = std.math.maxInt(i64);
+
+fn updateCandidateUp(lowest: *[66][66]i64, candidates: *std.BoundedArray(Vec2, 10000), input: Input, p: Vec2, current_height: u8, distance_to_p: i64) void {
+    if (p.x >= input.dim.x or p.y >= input.dim.y)
+        return; // out of bounds
+    // Can we move there from here?
+    if (input.heightfield[p.y][p.x] > current_height + 1)
+        return; // p is too high
+    if (lowest[p.y][p.x] == UNVISITED)
+        candidates.appendAssumeCapacity(p);
+    lowest[p.y][p.x] = std.math.min(lowest[p.y][p.x], distance_to_p);
+}
+
+fn updateCandidateDown(lowest: *[66][66]i64, candidates: *std.BoundedArray(Vec2, 10000), input: Input, p: Vec2, current_height: u8, distance_to_p: i64) void {
+    if (p.x >= input.dim.x or p.y >= input.dim.y)
+        return; // out of bounds
+    // Can we move there from here?
+    if (current_height > input.heightfield[p.y][p.x] + 1)
+        return; // p is too high
+    if (lowest[p.y][p.x] == UNVISITED)
+        candidates.appendAssumeCapacity(p);
+    lowest[p.y][p.x] = std.math.min(lowest[p.y][p.x], distance_to_p);
+}
+
+fn shortest_path_distance(input:Input, start:Vec2, goal:?Vec2) !i64 {
+    var lowest = comptime blk: {
+        @setEvalBranchQuota(10000);
+        var a: [66][66]i64 = undefined;
+        for (a) |*row| {
+            for (row) |*v| {
+                v.* = UNVISITED;
+            }
+        }
+        break :blk a;
+    };
+    var candidates = try std.BoundedArray(Vec2, 10000).init(0);
+    candidates.appendAssumeCapacity(start);
+    lowest[start.y][start.x] = 0; // distance to the starting point is 0, we're already there
+    while (candidates.len > 0) {
+        // find the next candidate to explore.
+        // Djikstra: pick the one with the minimum "lowest" value.
+        // A*: include a heuristic of the estimated (Manhattan) distance to the goal.
+        // Once again, Djikstra is faster?
+        var min_d: i64 = UNVISITED;
+        var min_d_index: usize = undefined;
+        for (candidates.constSlice()) |c, i| {
+            const ex = 0;//try std.math.absInt(@intCast(i64, goal.?.x) - @intCast(i64, c.x));
+            const ey = 0;//try std.math.absInt(@intCast(i64, goal.?.y) - @intCast(i64, c.y));
+            const manhattan_distance_to_goal = ex + ey;
+            const estimated_distance_to_goal = lowest[c.y][c.x] + manhattan_distance_to_goal;
+            if (estimated_distance_to_goal < min_d) {
+                min_d = estimated_distance_to_goal;
+                min_d_index = i;
+            }
+        }
+        // Select the candidate with the lowest estimated distance.
+        // We know for sure that its current lowest distance is correct.
+        const c = candidates.swapRemove(min_d_index);
+        //std.debug.print("Visited {d},{d} h={c} d={d}\n", .{ c.x, c.y, input.heightfield[c.y][c.x], min_d });
+        if (goal) |g| {
+            if (c.x == g.x and c.y == g.y) {
+                return lowest[g.y][g.x];
+            }
+        } else {
+            if (input.heightfield[c.y][c.x] == 'a') {
+                return lowest[c.y][c.x];
+            }
+        }
+        const distance_to_c = lowest[c.y][c.x];
+        const ch = input.heightfield[c.y][c.x];
+        if (goal) |_| {
+            updateCandidateUp(&lowest, &candidates, input, Vec2{ .x = c.x, .y = c.y + 1 }, ch, distance_to_c + 1);
+            updateCandidateUp(&lowest, &candidates, input, Vec2{ .x = c.x, .y = c.y -% 1 }, ch, distance_to_c + 1);
+            updateCandidateUp(&lowest, &candidates, input, Vec2{ .x = c.x + 1, .y = c.y }, ch, distance_to_c + 1);
+            updateCandidateUp(&lowest, &candidates, input, Vec2{ .x = c.x -% 1, .y = c.y }, ch, distance_to_c + 1);
+        } else {
+            updateCandidateDown(&lowest, &candidates, input, Vec2{ .x = c.x, .y = c.y + 1 }, ch, distance_to_c + 1);
+            updateCandidateDown(&lowest, &candidates, input, Vec2{ .x = c.x, .y = c.y -% 1 }, ch, distance_to_c + 1);
+            updateCandidateDown(&lowest, &candidates, input, Vec2{ .x = c.x + 1, .y = c.y }, ch, distance_to_c + 1);
+            updateCandidateDown(&lowest, &candidates, input, Vec2{ .x = c.x -% 1, .y = c.y }, ch, distance_to_c + 1);
+        }
+    }
+    unreachable;
+}
+
 fn part1(input: Input, output: *output_type) !void {
-    _ = input;
-    _ = output;
+    output.* = try shortest_path_distance(input, input.start, input.goal);
 }
 
 fn part2(input: Input, output: *output_type) !void {
-    _ = input;
-    _ = output;
+    output.* = try shortest_path_distance(input, input.goal, null);
 }
 
 const test_data =
-    \\test input data goes here
+    \\Sabqponm
+    \\abcryxxl
+    \\accszExk
+    \\acctuvwj
+    \\abdefghi
 ;
-const part1_test_solution: ?[]const u8 = null;
-const part1_solution: ?[]const u8 = null;
-const part2_test_solution: ?[]const u8 = null;
-const part2_solution: ?[]const u8 = null;
+const part1_test_solution: ?i64 = 31;
+const part1_solution: ?i64 = 370;
+const part2_test_solution: ?i64 = 29;
+const part2_solution: ?i64 = 363;
 
 // Just boilerplate below here, nothing to see
 
