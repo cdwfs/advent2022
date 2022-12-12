@@ -102,6 +102,6 @@ A list of the puzzles, and what new language/tool features I learned each day:
 - I made a [tagged union](https://ziglang.org/documentation/0.10.0/#Tagged-union)!
 - I wrote a quick utility to find the EOL character(s) for a given block of text, which should help me work around the LF/CRLF issues from day 5.
 
-### [Day 10: Monkey in the Middle](https://adventofcode.com/2022/day/11)
+### [Day 11: Monkey in the Middle](https://adventofcode.com/2022/day/11)
 - Squaring a number 10,000 times gets very large!
 - No fancy new language features. Just math.
