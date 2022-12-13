@@ -109,3 +109,7 @@ A list of the puzzles, and what new language/tool features I learned each day:
 ### [Day 12: Hill Climbing Algorithm](https://adventofcode.com/2022/day/12)
 - Once again (same as 2021 day 15), A* was actually slower than Djikstra's. The "visited node" counts were nearly identical, so I assume it's because the shortest path to the goal is so windy that there isn't actually much benefit to a guided search over a simple Djikstra's, and the extra overhead of the heuristic is just wasted.
 - The hacks to make part2 work are ugly but serviceable. In retrospect, implementing part1 in reverse (search outwards from the goal until you find the shortest path to the start) would have made part2 trivial (search outwards from the goal until you finding the shortest path to _any_ `a` cell).
+
+### [Day 13: Distress Signal](https://adventofcode.com/2022/day/13)
+- Parsing was _extremely_ fiddly. I'm sure there's a better way.
+- I got the correct answers the first time the code compiled and ran, and for that I am eternally grateful.
