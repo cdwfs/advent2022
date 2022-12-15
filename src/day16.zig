@@ -36,10 +36,10 @@ fn part2(input: Input, output: *output_type) !void {
 const test_data =
     \\test input data goes here
 ;
-const part1_test_solution: ?[]const u8 = null;
-const part1_solution: ?[]const u8 = null;
-const part2_test_solution: ?[]const u8 = null;
-const part2_solution: ?[]const u8 = null;
+const part1_test_solution: ?i64 = null;
+const part1_solution: ?i64 = null;
+const part2_test_solution: ?i64 = null;
+const part2_solution: ?i64 = null;
 
 // Just boilerplate below here, nothing to see
 
