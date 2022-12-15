@@ -113,3 +113,6 @@ A list of the puzzles, and what new language/tool features I learned each day:
 ### [Day 13: Distress Signal](https://adventofcode.com/2022/day/13)
 - Parsing was _extremely_ fiddly. I'm sure there's a better way.
 - I got the correct answers the first time the code compiled and ran, and for that I am eternally grateful.
+
+### [Day 14: Regolith Reservoir](https://adventofcode.com/2022/day/14)
+- I wonder if using a hashmap of cell contents would be faster than a sparse 2D array?
