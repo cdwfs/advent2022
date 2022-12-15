@@ -114,6 +114,7 @@ A list of the puzzles, and what new language/tool features I learned each day:
 - Parsing was _extremely_ fiddly. I'm sure there's a better way.
 - I got the correct answers the first time the code compiled and ran, and for that I am eternally grateful.
 - I came back later with some hints from the Zig Discord and implemented parse-free comparisons, and they were literally 500x faster (and half the code).
+- `callconv(.Inline)` is apparently now just an `inline` keyword on the function. And `zig format` fixes it automatically!
 
 ### [Day 14: Regolith Reservoir](https://adventofcode.com/2022/day/14)
 - I wonder if using a hashmap of cell contents would be faster than a sparse 2D array?

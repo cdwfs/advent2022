@@ -25,31 +25,37 @@ const Input = struct {
     }
 };
 
-fn isDigit(n:u8) callconv(.Inline) bool {
+inline fn isDigit(n: u8) bool {
     return (n & 0xF0) == 0x30;
 }
-fn readInt(p:[]const u8, i:*usize) callconv(.Inline) i64 {
-    var n:i64 = 0;
-    while(isDigit(p[i.*])) : (i.* += 1) {
-        n = n*10 + (p[i.*] - '0');
+inline fn readInt(p: []const u8, i: *usize) i64 {
+    var n: i64 = 0;
+    while (isDigit(p[i.*])) : (i.* += 1) {
+        n = n * 10 + (p[i.*] - '0');
     }
     return n;
 }
 fn comparePackets(pA: []const u8, pB: []const u8) std.math.Order {
-    var iA:usize = 0;
-    var iB:usize = 0;
-    var balance:i64 = 0; // +1 for each list A is simulating, -1 for each list B is simulating
-    while(iA < pA.len and iB < pB.len) {
+    var iA: usize = 0;
+    var iB: usize = 0;
+    var balance: i64 = 0; // +1 for each list A is simulating, -1 for each list B is simulating
+    while (iA < pA.len and iB < pB.len) {
         if (isDigit(pA[iA]) and isDigit(pB[iB])) { // parse and compare integers
             const nA = readInt(pA, &iA);
             const nB = readInt(pB, &iB);
             if (nA < nB) return .lt;
             if (nA > nB) return .gt;
-            while(balance > 0) : ({balance -= 1; iB += 1;}) {
+            while (balance > 0) : ({
+                balance -= 1;
+                iB += 1;
+            }) {
                 if (pB[iB] != ']')
                     return .lt;
             }
-            while(balance < 0) : ({balance += 1; iA += 1;}) {
+            while (balance < 0) : ({
+                balance += 1;
+                iA += 1;
+            }) {
                 if (pA[iA] != ']')
                     return .gt;
             }
@@ -76,7 +82,7 @@ fn part1(input: Input, output: *output_type) !void {
     var sum: usize = 0;
     const packets = input.packets.constSlice();
     while (i_pair < input.packets.len / 2) : (i_pair += 1) {
-        if (comparePackets(packets[2*i_pair+0], packets[2*i_pair+1]) == std.math.Order.lt) {
+        if (comparePackets(packets[2 * i_pair + 0], packets[2 * i_pair + 1]) == std.math.Order.lt) {
             sum += i_pair + 1;
         }
     }
@@ -86,7 +92,7 @@ fn part1(input: Input, output: *output_type) !void {
 fn part2(input: Input, output: *output_type) !void {
     var lt2: usize = 1; // indices are 1-based
     var lt6: usize = 2; // ...and [[6]] is greater than [[2]], even though we never compare them directly
-    for(input.packets.constSlice()) |packet| {
+    for (input.packets.constSlice()) |packet| {
         if (comparePackets(packet, "[[2]]") == std.math.Order.lt) {
             lt2 += 1;
         }
@@ -94,7 +100,7 @@ fn part2(input: Input, output: *output_type) !void {
             lt6 += 1;
         }
     }
-    output.* = @intCast(i64, lt2*lt6);
+    output.* = @intCast(i64, lt2 * lt6);
 }
 
 const test_data =
