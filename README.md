@@ -118,3 +118,7 @@ A list of the puzzles, and what new language/tool features I learned each day:
 
 ### [Day 14: Regolith Reservoir](https://adventofcode.com/2022/day/14)
 - I wonder if using a hashmap of cell contents would be faster than a sparse 2D array?
+
+### [Day 15: Beacon Exclusion Zone](https://adventofcode.com/2022/day/15)
+- I figured any representation that stored >0 data per cell would be impractical at this scale, so instead I implemented a per-row check for part 1 that just looked at the endpoints of the coverage range for each sensor.
+- For part 2, the first thing I checked was how long it took to run my part 1 single-row solution 4 million times (around 20 seconds in debug), so I knew it was feasible to just tweak the loop to look for holes instead of count covered cells. And that's what I did! I'm sure there's a smarter way, though.
