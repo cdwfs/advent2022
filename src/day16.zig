@@ -147,20 +147,16 @@ fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16),
         score_for_state.put(state.key, 0) catch unreachable;
         return 0;
     }
-    var best_next_state_score: u16 = 0;
+
+    // Build lists of possible actions for each actor
+    var actions1 = std.BoundedArray(Action,6).init(0) catch unreachable;
     // If all valves are open, just run down the clock. Fake this with a move to the current valve.
     if (state.key.open_valves.count() == input.valves.len) {
-        state_stack.*.appendAssumeCapacity(State.withActions(input, state, Action{ .move = state.key.loc_id }, Action{ .move = state.key.loc2_id }));
-        best_next_state_score = std.math.max(best_next_state_score, best_pressure(input, score_for_state, state_stack, global_best));
-        _ = state_stack.pop();
-        global_best.* = std.math.max(global_best.*, state.flow_per_tick + best_next_state_score);
+        actions1.appendAssumeCapacity(Action{.move = state.key.loc_id});
     } else {
         // If the current location's valve is closed, try opening it
         if (!state.key.open_valves.isSet(state.key.loc_id)) {
-            state_stack.*.appendAssumeCapacity(State.withActions(input, state, Action{ .open = state.key.loc_id }, Action{ .move = state.key.loc2_id }));
-            best_next_state_score = std.math.max(best_next_state_score, best_pressure(input, score_for_state, state_stack, global_best));
-            _ = state_stack.pop();
-            global_best.* = std.math.max(global_best.*, state.flow_per_tick + best_next_state_score);
+            actions1.appendAssumeCapacity(Action{.open = state.key.loc_id});
         }
         // Try moving to each neighboring valve.
         // TODO: sort tunnels at each node by which is the most promising, somehow?
@@ -168,12 +164,20 @@ fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16),
             // If we just moved here from a neighbor, skip checking the pointless move back to our old location on the very next turn
             if (dest_loc_id == state.prev_loc_id)
                 continue;
-            state_stack.*.appendAssumeCapacity(State.withActions(input, state, Action{ .move = dest_loc_id }, Action{ .move = state.key.loc2_id }));
-            best_next_state_score = std.math.max(best_next_state_score, best_pressure(input, score_for_state, state_stack, global_best));
-            _ = state_stack.pop();
-            global_best.* = std.math.max(global_best.*, state.flow_total + best_next_state_score);
+            actions1.appendAssumeCapacity(Action{.move = dest_loc_id});
         }
     }
+
+    // Evaluate all actions
+    var best_next_state_score: u16 = 0;
+    const action2 = Action{.move = state.key.loc2_id}; // dummy move for action2
+    for(actions1.constSlice()) |action1| {
+        state_stack.*.appendAssumeCapacity(State.withActions(input, state, action1, action2));
+        best_next_state_score = std.math.max(best_next_state_score, best_pressure(input, score_for_state, state_stack, global_best));
+        _ = state_stack.pop();
+        global_best.* = std.math.max(global_best.*, state.flow_per_tick + best_next_state_score);
+    }
+    // Finalize score for this state
     const this_state_score = state.flow_per_tick + best_next_state_score;
     score_for_state.put(state.key, this_state_score) catch unreachable;
     return this_state_score;
