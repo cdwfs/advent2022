@@ -3,9 +3,9 @@ const util = @import("util.zig");
 const data = @embedFile("data/day16.txt");
 
 const Valve = struct {
-    name:[]const u8,
-    id:usize,
-    flow_rate:u16,
+    name: []const u8,
+    id: usize,
+    flow_rate: u16,
     tunnels_to: std.BoundedArray(u6, 5),
 };
 
@@ -19,14 +19,14 @@ const Input = struct {
         var lines = std.mem.tokenize(u8, input_text, eol);
         var input = Input{
             .allocator = allocator,
-            .valves = try std.BoundedArray(Valve,64).init(0),
+            .valves = try std.BoundedArray(Valve, 64).init(0),
             .valve_name_to_id = std.StringHashMap(usize).init(allocator),
         };
         errdefer input.deinit();
 
         // First pass to compute a valve name -> index map
         try input.valve_name_to_id.ensureTotalCapacity(64);
-        while(lines.next()) |line| {
+        while (lines.next()) |line| {
             var parts = std.mem.tokenize(u8, line, "=;");
             const name = parts.next().?[6..8];
             //std.debug.print("valve id={d} is {s} connects\n", .{input.valve_name_to_id.count(),name});
@@ -35,7 +35,7 @@ const Input = struct {
 
         // Second pass to parse valves
         lines = std.mem.tokenize(u8, input_text, eol);
-        while(lines.next()) |line| {
+        while (lines.next()) |line| {
             var parts = std.mem.tokenize(u8, line, "=;");
             const name = parts.next().?[6..8];
             const id = input.valve_name_to_id.get(name).?;
@@ -47,7 +47,7 @@ const Input = struct {
                 .flow_rate = flow_rate,
                 .tunnels_to = try std.BoundedArray(u6, 5).init(0),
             };
-            while(tunnels.next()) |tunnel| {
+            while (tunnels.next()) |tunnel| {
                 valve.tunnels_to.appendAssumeCapacity(@truncate(u6, input.valve_name_to_id.get(tunnel).?));
             }
             input.valves.appendAssumeCapacity(valve);
@@ -71,9 +71,9 @@ const State = struct {
     flow_per_tick: u16 = 0,
     prev_valve_id: ?u6 = null,
 
-    fn open_valve(input:Input, prev_state:State) State {
-        var new_state = State {
-            .key = StateKey {
+    fn open_valve(input: Input, prev_state: State) State {
+        var new_state = State{
+            .key = StateKey{
                 .open_valves = prev_state.key.open_valves,
                 .tick = prev_state.key.tick + 1,
                 .loc_id = prev_state.key.loc_id,
@@ -85,10 +85,10 @@ const State = struct {
         new_state.key.open_valves.set(new_state.key.loc_id);
         return new_state;
     }
-    fn move(input:Input, prev_state:State, new_loc_id:u6) State {
+    fn move(input: Input, prev_state: State, new_loc_id: u6) State {
         _ = input;
-        return State {
-            .key = StateKey {
+        return State{
+            .key = StateKey{
                 .open_valves = prev_state.key.open_valves,
                 .tick = prev_state.key.tick + 1,
                 .loc_id = new_loc_id,
@@ -100,35 +100,20 @@ const State = struct {
     }
 };
 
-fn estimate_best(input:Input, state:State) u16 {
-    _ = input;
-    const biggest_flows = std.BoundedArray(u16, 16).init(0) catch unreachable;
-    var ticks_left = 30 - state.tick;
-    //var biggest_valve_index = 0;
-    var estimate = 0;
-    // Count whatever total flow we've already locked in
-    estimate += state.flow_total;
-    // The existing flow rate will continue for the remaining ticks
-    estimate += (state.flow_per_tick * ticks_left);
-    // best case, without looking too closely:
-    // - turn on highest-pressure closed valve this tick
-    // - move to new valve on tick+1
-    // - turn on second highest pressure closed valve on tick+2
-    // - etc. until we run out of ticks
-    // This requires keeping a sorted list of the highest-pressure valves, which we keep up to date as we
-    // open them.
-    for(biggest_flows.constSlice()) |f| {
-        estimate += (f * std.math.max(ticks_left,0));
+// Returns the best score we can get from the input state, *starting from 0.*
+// Stores the best score found so far in global_best.
+fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16), state_stack: *std.BoundedArray(State, 32), global_best: *u16) u16 {
+    const state = state_stack.get(state_stack.len - 1);
+    // If we already have a score for this state, return it
+    if (score_for_state.get(state.key)) |score| {
+        return score;
     }
-    // TEMP: heuristic isn't working yet, so it should always fail.
-    estimate +|= std.math.maxInt(u16);
-}
+    // Beyond this point we can assume that we do NOT know the best score for the current state, and all code paths
+    // must store it before they return.
 
-fn best_pressure(input:Input, state_stack:*std.BoundedArray(State,32), prev_best:u16) u16 {
-    const state = state_stack.get(state_stack.len-1);
     // If we're out of time, report the best
     if (state.key.tick >= 30) {
-        if (state.flow_total > prev_best) {
+        if (state.flow_total > global_best.*) {
             std.debug.print("new best: {d}\n", .{state.flow_total});
             //if (state.flow_total == 1651) {
             //    for(state_stack.constSlice()[1..]) |s| {
@@ -140,47 +125,52 @@ fn best_pressure(input:Input, state_stack:*std.BoundedArray(State,32), prev_best
             //        }
             //    }
             //}
+            global_best.* = state.flow_total;
         }
-        return std.math.max(prev_best, state.flow_total);
+        score_for_state.put(state.key, 0) catch unreachable;
+        return 0;
     }
-    //if (estimate_best(input, state) < prev_best)
-    //    return prev_best;
-    var new_best:u16 = prev_best;
+    var best_next_state_score:u16 = 0;
     // If all valves are open, just run down the clock. Fake this with a move to the current valve.
     if (state.key.open_valves.count() == input.valves.len) {
         state_stack.*.appendAssumeCapacity(State.move(input, state, state.key.loc_id));
-        new_best = best_pressure(input, state_stack, new_best);
+        best_next_state_score = std.math.max(best_next_state_score, best_pressure(input, score_for_state, state_stack, global_best));
         _ = state_stack.pop();
-        return new_best;
+        global_best.* = std.math.max(global_best.*, state.flow_per_tick + best_next_state_score);
+    } else {
+        // If the current location's valve is closed, try opening it
+        if (!state.key.open_valves.isSet(state.key.loc_id)) {
+            state_stack.*.appendAssumeCapacity(State.open_valve(input, state));
+            best_next_state_score = std.math.max(best_next_state_score, best_pressure(input, score_for_state, state_stack, global_best));
+            _ = state_stack.pop();
+            global_best.* = std.math.max(global_best.*, state.flow_per_tick + best_next_state_score);
+        }
+        // Try moving to each neighboring valve.
+        // TODO: sort tunnels at each node by which is the most promising, somehow?
+        for (input.valves.get(state.key.loc_id).tunnels_to.constSlice()) |dest_loc_id| {
+            // If we just moved here from a neighbor, skip checking the pointless move back to our old location on the very next turn
+            if (dest_loc_id == state.prev_valve_id)
+                continue;
+            state_stack.*.appendAssumeCapacity(State.move(input, state, dest_loc_id));
+            best_next_state_score = std.math.max(best_next_state_score, best_pressure(input, score_for_state, state_stack, global_best));
+            _ = state_stack.pop();
+            global_best.* = std.math.max(global_best.*, state.flow_total + best_next_state_score);
+        }
     }
-    // If the current location's valve is closed, try opening it
-    if (!state.key.open_valves.isSet(state.key.loc_id)) {
-        state_stack.*.appendAssumeCapacity(State.open_valve(input, state));
-        new_best = best_pressure(input, state_stack, new_best);
-        _ = state_stack.pop();
-    }
-    // Try moving to each neighboring valve.
-    // TODO: sort tunnels at each node by which is the most promising, somehow?
-    for(input.valves.get(state.key.loc_id).tunnels_to.constSlice()) |dest_loc_id| {
-        // If we just moved here from a neighbor, skip checking the pointless move back to our old location on the very next turn
-        if (dest_loc_id == state.prev_valve_id)
-            continue;
-        state_stack.*.appendAssumeCapacity(State.move(input, state, dest_loc_id));
-        new_best = best_pressure(input, state_stack, new_best);
-        _ = state_stack.pop();
-    }
-    return new_best;
+    const this_state_score = state.flow_per_tick + best_next_state_score;
+    score_for_state.put(state.key, this_state_score) catch unreachable;
+    return this_state_score;
 }
 
 fn part1(input: Input, output: *output_type) !void {
     var initial_state = State{
-        .key = StateKey {
+        .key = StateKey{
             .loc_id = @truncate(u6, input.valve_name_to_id.get("AA").?),
         },
     };
     // A bunch of the valves have a flow rate of 0. Opening them is pointless. So, let's just pretend they're all
     // open to begin with.
-    for(input.valves.constSlice()) |valve,id| {
+    for (input.valves.constSlice()) |valve, id| {
         if (valve.flow_rate == 0)
             initial_state.key.open_valves.set(id);
     }
@@ -188,13 +178,17 @@ fn part1(input: Input, output: *output_type) !void {
     // So in theory we could draw a much simpler graph. But since I'm already filtering backtracking, I'm not sure
     // how much that would buy.
 
-    //var score_for_state = std.AutoArrayHashMap(StateKey,u16)
+    var score_for_state = std.AutoHashMap(StateKey, u16).init(input.allocator);
+    defer score_for_state.deinit();
+    try score_for_state.ensureTotalCapacity(32768 * 64 * 30);
 
-    var state_stack = try std.BoundedArray(State,32).init(0);
+    var state_stack = try std.BoundedArray(State, 32).init(0);
     state_stack.appendAssumeCapacity(initial_state);
 
     // Find the best!
-    output.* = best_pressure(input, &state_stack, 0);
+    var best_score:u16 = 0;
+    output.* = best_pressure(input, &score_for_state, &state_stack, &best_score);
+    std.debug.assert(output.* == best_score);
 }
 
 fn part2(input: Input, output: *output_type) !void {
@@ -216,7 +210,7 @@ const test_data =
 ;
 const part1_test_solution: ?i64 = 1651;
 const part1_solution: ?i64 = 1653;
-const part2_test_solution: ?i64 = null;//1707;
+const part2_test_solution: ?i64 = null; //1707;
 const part2_solution: ?i64 = null;
 
 // Just boilerplate below here, nothing to see
