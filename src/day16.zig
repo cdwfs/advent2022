@@ -130,7 +130,7 @@ fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16),
         score_for_state.put(state.key, 0) catch unreachable;
         return 0;
     }
-    var best_next_state_score:u16 = 0;
+    var best_next_state_score: u16 = 0;
     // If all valves are open, just run down the clock. Fake this with a move to the current valve.
     if (state.key.open_valves.count() == input.valves.len) {
         state_stack.*.appendAssumeCapacity(State.move(input, state, state.key.loc_id));
@@ -180,14 +180,16 @@ fn part1(input: Input, output: *output_type) !void {
 
     var score_for_state = std.AutoHashMap(StateKey, u16).init(input.allocator);
     defer score_for_state.deinit();
-    try score_for_state.ensureTotalCapacity(32768 * 64 * 30);
+    // preallocating the hash map storage isn't buying us THAT much, it turns out.
+    try score_for_state.ensureTotalCapacity(1_000_000); //32768 * 64 * 30);
 
     var state_stack = try std.BoundedArray(State, 32).init(0);
     state_stack.appendAssumeCapacity(initial_state);
 
     // Find the best!
-    var best_score:u16 = 0;
+    var best_score: u16 = 0;
     output.* = best_pressure(input, &score_for_state, &state_stack, &best_score);
+    std.debug.print("{d} scores stored\n", .{score_for_state.count()});
     std.debug.assert(output.* == best_score);
 }
 
