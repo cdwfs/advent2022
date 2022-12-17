@@ -77,9 +77,10 @@ const State = struct {
     flow_per_tick: u16 = 0,
     prev_loc_id: ?u6 = null,
     prev_loc2_id: ?u6 = null,
+    max_ticks: u5 = 0,
 
     fn withActions(input: Input, prev_state: State, action1: Action, action2: Action) State {
-        var new_state = State {
+        var new_state = State{
             .key = StateKey{
                 .open_valves = prev_state.key.open_valves,
                 .tick = prev_state.key.tick + 1,
@@ -90,8 +91,9 @@ const State = struct {
             .flow_per_tick = prev_state.flow_per_tick,
             .prev_loc_id = null,
             .prev_loc2_id = null,
+            .max_ticks = prev_state.max_ticks,
         };
-        switch(action1) {
+        switch (action1) {
             .open => |id| {
                 new_state.key.open_valves.set(id);
                 new_state.flow_per_tick += input.valves.get(prev_state.key.loc_id).flow_rate;
@@ -99,9 +101,9 @@ const State = struct {
             .move => |id| {
                 new_state.key.loc_id = id;
                 new_state.prev_loc_id = prev_state.key.loc_id;
-            }
+            },
         }
-        switch(action2) {
+        switch (action2) {
             .open => |id| {
                 new_state.key.open_valves.set(id);
                 new_state.flow_per_tick += input.valves.get(prev_state.key.loc_id).flow_rate;
@@ -109,7 +111,7 @@ const State = struct {
             .move => |id| {
                 new_state.key.loc2_id = id;
                 new_state.prev_loc2_id = prev_state.key.loc2_id;
-            }
+            },
         }
         return new_state;
     }
@@ -127,7 +129,7 @@ fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16),
     // must store it before they return.
 
     // If we're out of time, report the best
-    if (state.key.tick >= 30) {
+    if (state.key.tick >= state.max_ticks) {
         if (state.flow_total > global_best.*) {
             std.debug.print("new best: {d}\n", .{state.flow_total});
             //if (state.flow_total == 1651) {
@@ -148,14 +150,14 @@ fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16),
     var best_next_state_score: u16 = 0;
     // If all valves are open, just run down the clock. Fake this with a move to the current valve.
     if (state.key.open_valves.count() == input.valves.len) {
-        state_stack.*.appendAssumeCapacity(State.withActions(input, state, Action{.move = state.key.loc_id}, Action{.move = state.key.loc2_id}));
+        state_stack.*.appendAssumeCapacity(State.withActions(input, state, Action{ .move = state.key.loc_id }, Action{ .move = state.key.loc2_id }));
         best_next_state_score = std.math.max(best_next_state_score, best_pressure(input, score_for_state, state_stack, global_best));
         _ = state_stack.pop();
         global_best.* = std.math.max(global_best.*, state.flow_per_tick + best_next_state_score);
     } else {
         // If the current location's valve is closed, try opening it
         if (!state.key.open_valves.isSet(state.key.loc_id)) {
-            state_stack.*.appendAssumeCapacity(State.withActions(input, state, Action{.open = state.key.loc_id}, Action{.move = state.key.loc2_id}));
+            state_stack.*.appendAssumeCapacity(State.withActions(input, state, Action{ .open = state.key.loc_id }, Action{ .move = state.key.loc2_id }));
             best_next_state_score = std.math.max(best_next_state_score, best_pressure(input, score_for_state, state_stack, global_best));
             _ = state_stack.pop();
             global_best.* = std.math.max(global_best.*, state.flow_per_tick + best_next_state_score);
@@ -166,7 +168,7 @@ fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16),
             // If we just moved here from a neighbor, skip checking the pointless move back to our old location on the very next turn
             if (dest_loc_id == state.prev_loc_id)
                 continue;
-            state_stack.*.appendAssumeCapacity(State.withActions(input, state, Action{.move = dest_loc_id}, Action{.move = state.key.loc2_id}));
+            state_stack.*.appendAssumeCapacity(State.withActions(input, state, Action{ .move = dest_loc_id }, Action{ .move = state.key.loc2_id }));
             best_next_state_score = std.math.max(best_next_state_score, best_pressure(input, score_for_state, state_stack, global_best));
             _ = state_stack.pop();
             global_best.* = std.math.max(global_best.*, state.flow_total + best_next_state_score);
@@ -183,6 +185,7 @@ fn part1(input: Input, output: *output_type) !void {
             .loc_id = @truncate(u6, input.valve_name_to_id.get("AA").?),
             .loc2_id = @truncate(u6, input.valve_name_to_id.get("AA").?),
         },
+        .max_ticks = 30,
     };
     // A bunch of the valves have a flow rate of 0. Opening them is pointless. So, let's just pretend they're all
     // open to begin with.
