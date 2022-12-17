@@ -122,3 +122,9 @@ A list of the puzzles, and what new language/tool features I learned each day:
 ### [Day 15: Beacon Exclusion Zone](https://adventofcode.com/2022/day/15)
 - I figured any representation that stored >0 data per cell would be impractical at this scale, so instead I implemented a per-row check for part 1 that just looked at the endpoints of the coverage range for each sensor.
 - For part 2, the first thing I checked was how long it took to run my part 1 single-row solution 4 million times (around 20 seconds in debug), so I knew it was feasible to just tweak the loop to look for holes instead of count covered cells. And that's what I did! I'm sure there's a smarter way, though.
+
+### [Day 16: Proboscidea Volcanium](https://adventofcode.com/2022/day/15)
+- What a disaster.
+- The key word today was "graph reduction". Reduce the current state to as little data as possible, use it to create a hash table of previously-visited states and their results, and then refer to that table on future iterations to avoid needlessly recomputing work. I was able to get a correct solution for day 1 without this, but when I added it retroactively it was about 100x speedup.
+- For part 2, even that wasn't enough; my solver ran for 5-10 minutes before running out of memory (Zig hash tables are limited to 4GB). I added a few low-hanging early outs to reduce the number of states I was caching, but in the end what saved me was reversing the order of my tunnels (so I visit a different set of states before I OOM). This happened to be enough to get me a correct solution, but I hate it.
+- The way to make this run in O(milliseconds) instead of O(minutes) seems to be some sort of pruning to early-out if you can be confident there's no way to beat to current best score from your current state. I didn't implement this because all the heuristics I thought of seemed way too conservative, but maybe "way too conservative" is better than "nothing at all".

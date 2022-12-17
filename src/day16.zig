@@ -50,6 +50,7 @@ const Input = struct {
             while (tunnels.next()) |tunnel| {
                 valve.tunnels_to.appendAssumeCapacity(@truncate(u6, input.valve_name_to_id.get(tunnel).?));
             }
+            std.mem.reverse(u6, valve.tunnels_to.slice()); // let's search back to front!
             input.valves.appendAssumeCapacity(valve);
         }
         return input;
@@ -166,9 +167,12 @@ fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16),
 
     // Build lists of possible actions for each actor
     var actions1 = std.BoundedArray(Action,6).init(0) catch unreachable;
-    // If all valves are open, just run down the clock. Fake this with a move to the current valve.
+    // If all valves are open, we know the score for this state will be ticks_left * flow rate.
     if (state.key.open_valves.count() == input.valves.len) {
-        actions1.appendAssumeCapacity(Action{.move = state.key.loc_id});
+        const this_state_score = state.flow_per_tick * (state.max_ticks - state.key.tick);
+        // No need to cache it, it's fast to compute
+        //score_for_state.put(state.key, this_state_score) catch unreachable;
+        return this_state_score;
     } else {
         // If the current location's valve is closed, try opening it
         if (!state.key.open_valves.isSet(state.key.loc_id)) {
@@ -190,7 +194,8 @@ fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16),
     } else {
         // If all valves are open, just run down the clock. Fake this with a move to the current valve.
         if (state.key.open_valves.count() == input.valves.len) {
-            actions2.appendAssumeCapacity(Action{.move = state.key.loc2_id});
+            // shouldn't get here, it would be caught by the P1 branch
+            unreachable;
         } else {
             // If the current location's valve is closed, try opening it
             if (!state.key.open_valves.isSet(state.key.loc2_id)) {
@@ -222,7 +227,8 @@ fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16),
     }
     // Finalize score for this state
     const this_state_score = state.flow_per_tick + best_next_state_score;
-    score_for_state.put(state.key, this_state_score) catch unreachable;
+    if (state.max_ticks - state.key.tick >= 3)
+        score_for_state.put(state.key, this_state_score) catch unreachable;
     return this_state_score;
 }
 
@@ -248,7 +254,7 @@ fn part1(input: Input, output: *output_type) !void {
     var score_for_state = std.AutoHashMap(StateKey, u16).init(input.allocator);
     defer score_for_state.deinit();
     // preallocating the hash map storage isn't buying us THAT much, it turns out.
-    try score_for_state.ensureTotalCapacity(1_000_000); //32768 * 64 * 30);
+    try score_for_state.ensureTotalCapacity(1_000_000);
 
     var state_stack = try std.BoundedArray(State, 32).init(0);
     state_stack.appendAssumeCapacity(initial_state);
@@ -284,7 +290,7 @@ fn part2(input: Input, output: *output_type) !void {
     var score_for_state = std.AutoHashMap(StateKey, u16).init(gpa);
     defer score_for_state.deinit();
     // preallocating the hash map storage isn't buying us THAT much, it turns out.
-    try score_for_state.ensureTotalCapacity(200_00_000); //32768 * 64 * 30);
+    try score_for_state.ensureTotalCapacity(104_217_728);
 
     var state_stack = try std.BoundedArray(State, 32).init(0);
     state_stack.appendAssumeCapacity(initial_state);
@@ -310,7 +316,7 @@ const test_data =
 const part1_test_solution: ?i64 = 1651;
 const part1_solution: ?i64 = 1653;
 const part2_test_solution: ?i64 = 1707;
-const part2_solution: ?i64 = 0; // 1698 is too low
+const part2_solution: ?i64 = 2223;
 
 // Just boilerplate below here, nothing to see
 
