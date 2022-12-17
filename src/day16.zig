@@ -159,14 +159,14 @@ fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16),
             //    }
             //}
             global_best.* = state.flow_total;
-            std.debug.print("new best: {d} ({d} scores stored)\n", .{global_best.*, score_for_state.count() + 1});
+            std.debug.print("new best: {d} ({d} scores stored)\n", .{ global_best.*, score_for_state.count() + 1 });
         }
         //score_for_state.put(state.key, 0) catch unreachable; // let's not bother scoring these, they return immediately
         return 0;
     }
 
     // Build lists of possible actions for each actor
-    var actions1 = std.BoundedArray(Action,6).init(0) catch unreachable;
+    var actions1 = std.BoundedArray(Action, 6).init(0) catch unreachable;
     // If all valves are open, we know the score for this state will be ticks_left * flow rate.
     if (state.key.open_valves.count() == input.valves.len) {
         const this_state_score = state.flow_per_tick * (state.max_ticks - state.key.tick);
@@ -176,7 +176,7 @@ fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16),
     } else {
         // If the current location's valve is closed, try opening it
         if (!state.key.open_valves.isSet(state.key.loc_id)) {
-            actions1.appendAssumeCapacity(Action{.open = state.key.loc_id});
+            actions1.appendAssumeCapacity(Action{ .open = state.key.loc_id });
         }
         // Try moving to each neighboring valve.
         // TODO: sort tunnels at each node by which is the most promising, somehow?
@@ -184,13 +184,13 @@ fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16),
             // If we just moved here from a neighbor, skip checking the pointless move back to our old location on the very next turn
             if (dest_loc_id == state.prev_loc_id)
                 continue;
-            actions1.appendAssumeCapacity(Action{.move = dest_loc_id});
+            actions1.appendAssumeCapacity(Action{ .move = dest_loc_id });
         }
     }
-    var actions2 = std.BoundedArray(Action,6).init(0) catch unreachable;
+    var actions2 = std.BoundedArray(Action, 6).init(0) catch unreachable;
     if (!state.use_p2) {
         // If P2 is disabled, just give them a dummy move-to-self action every turn
-        actions2.appendAssumeCapacity(Action{.move = state.key.loc2_id});
+        actions2.appendAssumeCapacity(Action{ .move = state.key.loc2_id });
     } else {
         // If all valves are open, just run down the clock. Fake this with a move to the current valve.
         if (state.key.open_valves.count() == input.valves.len) {
@@ -199,7 +199,7 @@ fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16),
         } else {
             // If the current location's valve is closed, try opening it
             if (!state.key.open_valves.isSet(state.key.loc2_id)) {
-                actions2.appendAssumeCapacity(Action{.open = state.key.loc2_id});
+                actions2.appendAssumeCapacity(Action{ .open = state.key.loc2_id });
             }
             // Try moving to each neighboring valve.
             // TODO: sort tunnels at each node by which is the most promising, somehow?
@@ -207,21 +207,21 @@ fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16),
                 // If we just moved here from a neighbor, skip checking the pointless move back to our old location on the very next turn
                 if (dest_loc2_id == state.prev_loc2_id)
                     continue;
-                actions2.appendAssumeCapacity(Action{.move = dest_loc2_id});
+                actions2.appendAssumeCapacity(Action{ .move = dest_loc2_id });
             }
         }
     }
 
     // Evaluate all actions
     var best_next_state_score: u16 = 0;
-    for(actions2.constSlice()) |action2| {
-        for(actions1.constSlice()) |action1| {
+    for (actions2.constSlice()) |action2| {
+        for (actions1.constSlice()) |action1| {
             state_stack.*.appendAssumeCapacity(State.withActions(input, state, action1, action2));
             best_next_state_score = std.math.max(best_next_state_score, best_pressure(input, score_for_state, state_stack, global_best));
             _ = state_stack.pop();
             if (state.flow_per_tick + best_next_state_score > global_best.*) {
                 global_best.* = state.flow_per_tick + best_next_state_score;
-                std.debug.print("new best: {d} ({d} scores stored)\n", .{global_best.*, score_for_state.count() + 1});
+                std.debug.print("new best: {d} ({d} scores stored)\n", .{ global_best.*, score_for_state.count() + 1 });
             }
         }
     }
