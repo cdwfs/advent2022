@@ -5,7 +5,7 @@ const data = @embedFile("data/day16.txt");
 const Valve = struct {
     name:[]const u8,
     id:usize,
-    flow_rate:i64,
+    flow_rate:u16,
     tunnels_to: std.BoundedArray(u6, 5),
 };
 
@@ -39,7 +39,7 @@ const Input = struct {
             var parts = std.mem.tokenize(u8, line, "=;");
             const name = parts.next().?[6..8];
             const id = input.valve_name_to_id.get(name).?;
-            const flow_rate = try std.fmt.parseInt(i64, parts.next().?, 10);
+            const flow_rate = try std.fmt.parseInt(u16, parts.next().?, 10);
             var tunnels = std.mem.tokenize(u8, parts.next().?[23..], "s, ");
             var valve = Valve{
                 .name = name,
@@ -67,8 +67,8 @@ const StateKey = struct {
 
 const State = struct {
     key: StateKey,
-    flow_total: i64 = 0,
-    flow_per_tick: i64 = 0,
+    flow_total: u16 = 0,
+    flow_per_tick: u16 = 0,
     prev_valve_id: ?u6 = null,
 
     fn open_valve(input:Input, prev_state:State) State {
@@ -100,9 +100,9 @@ const State = struct {
     }
 };
 
-fn estimate_best(input:Input, state:State) i64 {
+fn estimate_best(input:Input, state:State) u16 {
     _ = input;
-    const biggest_flows = std.BoundedArray(i64, 16).init(0) catch unreachable;
+    const biggest_flows = std.BoundedArray(u16, 16).init(0) catch unreachable;
     var ticks_left = 30 - state.tick;
     //var biggest_valve_index = 0;
     var estimate = 0;
@@ -121,10 +121,10 @@ fn estimate_best(input:Input, state:State) i64 {
         estimate += (f * std.math.max(ticks_left,0));
     }
     // TEMP: heuristic isn't working yet, so it should always fail.
-    estimate +|= std.math.maxInt(i64);
+    estimate +|= std.math.maxInt(u16);
 }
 
-fn best_pressure(input:Input, state_stack:*std.BoundedArray(State,32), prev_best:i64) i64 {
+fn best_pressure(input:Input, state_stack:*std.BoundedArray(State,32), prev_best:u16) u16 {
     const state = state_stack.get(state_stack.len-1);
     // If we're out of time, report the best
     if (state.key.tick >= 30) {
@@ -145,7 +145,7 @@ fn best_pressure(input:Input, state_stack:*std.BoundedArray(State,32), prev_best
     }
     //if (estimate_best(input, state) < prev_best)
     //    return prev_best;
-    var new_best:i64 = prev_best;
+    var new_best:u16 = prev_best;
     // If all valves are open, just run down the clock. Fake this with a move to the current valve.
     if (state.key.open_valves.count() == input.valves.len) {
         state_stack.*.appendAssumeCapacity(State.move(input, state, state.key.loc_id));
@@ -188,7 +188,7 @@ fn part1(input: Input, output: *output_type) !void {
     // So in theory we could draw a much simpler graph. But since I'm already filtering backtracking, I'm not sure
     // how much that would buy.
 
-    //var score_for_state = std.AutoArrayHashMap(State
+    //var score_for_state = std.AutoArrayHashMap(StateKey,u16)
 
     var state_stack = try std.BoundedArray(State,32).init(0);
     state_stack.appendAssumeCapacity(initial_state);
