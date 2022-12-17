@@ -13,6 +13,7 @@ const Input = struct {
     allocator: std.mem.Allocator,
     valves: std.BoundedArray(Valve, 64),
     valve_name_to_id: std.StringHashMap(usize),
+    sorted_valve_rates: std.BoundedArray(u16, 64),
 
     pub fn init(input_text: []const u8, allocator: std.mem.Allocator) !@This() {
         const eol = util.getLineEnding(input_text).?;
@@ -21,6 +22,7 @@ const Input = struct {
             .allocator = allocator,
             .valves = try std.BoundedArray(Valve, 64).init(0),
             .valve_name_to_id = std.StringHashMap(usize).init(allocator),
+            .sorted_valve_rates = try std.BoundedArray(u16, 64).init(0),
         };
         errdefer input.deinit();
 
@@ -50,9 +52,12 @@ const Input = struct {
             while (tunnels.next()) |tunnel| {
                 valve.tunnels_to.appendAssumeCapacity(@truncate(u6, input.valve_name_to_id.get(tunnel).?));
             }
-            std.mem.reverse(u6, valve.tunnels_to.slice()); // let's search back to front!
+            //std.mem.reverse(u6, valve.tunnels_to.slice()); // let's search back to front!
             input.valves.appendAssumeCapacity(valve);
+            if (flow_rate > 0)
+                input.sorted_valve_rates.appendAssumeCapacity(flow_rate);
         }
+        std.sort.sort(u16, input.sorted_valve_rates.slice(), {}, comptime std.sort.desc(u16));
         return input;
     }
     pub fn deinit(self: *@This()) void {
@@ -126,6 +131,36 @@ const State = struct {
     }
 };
 
+fn estimate_pressure1(input:Input, state:State) u16 {
+    var ticks_left = state.max_ticks -| state.key.tick;
+    var estimate:u16 = state.flow_per_tick * ticks_left;
+    // Assume we turn on the best valve next tick,
+    // and the second best two ticks later, etc.
+    var i_best:usize = 0;
+    while(ticks_left > 0 and i_best < input.sorted_valve_rates.len) : ({ticks_left -|= 2; i_best += 1;}) {
+        estimate += input.sorted_valve_rates.get(i_best) * ticks_left;
+    }
+    return estimate;
+}
+
+fn estimate_pressure2(input:Input, state:State) u16 {
+    var ticks_left = state.max_ticks -| state.key.tick;
+    var estimate:u16 = state.flow_per_tick * ticks_left;
+    // Assume we turn on the best & second-best valves next tick,
+    // and the 3rd & 4th best two ticks later, etc.
+    var i_best:usize = 0;
+    while(ticks_left > 0 and i_best < input.sorted_valve_rates.len) : (ticks_left -|= 2) {
+        estimate += input.sorted_valve_rates.get(i_best) * ticks_left;
+        i_best += 1;
+        if (i_best < input.sorted_valve_rates.len)
+        {
+            estimate += input.sorted_valve_rates.get(i_best) * ticks_left;
+            i_best += 1;
+        }
+    }
+    return estimate;
+}
+
 // Returns the best score we can get from the input state, *starting from 0.*
 // Stores the best score found so far in global_best.
 fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16), state_stack: *std.BoundedArray(State, 32), global_best: *u16) u16 {
@@ -134,8 +169,6 @@ fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16),
     if (score_for_state.get(state.key)) |score| {
         return score;
     }
-    // Beyond this point we can assume that we do NOT know the best score for the current state, and all code paths
-    // must store it before they return.
 
     // If we're out of time, report the best
     if (state.key.tick >= state.max_ticks) {
@@ -161,9 +194,22 @@ fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16),
             global_best.* = state.flow_total;
             std.debug.print("new best: {d} ({d} scores stored)\n", .{ global_best.*, score_for_state.count() + 1 });
         }
-        //score_for_state.put(state.key, 0) catch unreachable; // let's not bother scoring these, they return immediately
+        // let's not bother scoring these, they return immediately.
+        //score_for_state.put(state.key, 0) catch unreachable;
         return 0;
     }
+
+    // If there's no way we can do better than the global best on this path, abort.
+    if (!state.use_p2) {
+        if (state.flow_total + estimate_pressure1(input, state) < global_best.*)
+            return 0;
+    } else {
+        if (state.flow_total + estimate_pressure2(input, state) < global_best.*)
+            return 0;
+    }
+
+    // Beyond this point we can assume that we do NOT know the best score for the current state, and all code paths
+    // must store it before they return.
 
     // Build lists of possible actions for each actor
     var actions1 = std.BoundedArray(Action, 6).init(0) catch unreachable;
@@ -227,7 +273,7 @@ fn best_pressure(input: Input, score_for_state: *std.AutoHashMap(StateKey, u16),
     }
     // Finalize score for this state
     const this_state_score = state.flow_per_tick + best_next_state_score;
-    if (state.max_ticks - state.key.tick >= 3)
+    if (state.max_ticks - state.key.tick >= 3) // hack to reduce the number of cached states
         score_for_state.put(state.key, this_state_score) catch unreachable;
     return this_state_score;
 }
