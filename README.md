@@ -134,3 +134,7 @@ A list of the puzzles, and what new language/tool features I learned each day:
 - VSCode doesn't do well inspecting Zig's weird-sized integers in the debugger. A `[4]u9` was rendered very strangely.
 - I'm reasonable happy with the cycle-detection and -validation logic, but my scourge in the end was off-by-one errors.
 - Something to internalize for the future: Zig will happily cast unsigned integers to `usize` when indexing arrays, so you don't need to make every unsigned variable a `usize` just in case it's an array index. _Signed_ integers must still be converted, however.
+
+### [Day 18: Boiling Boulders](https://adventofcode.com/2022/day/18)
+- I screw up nested for loops in Zig _every single time_.
+- Other than that, today was pretty nice.
