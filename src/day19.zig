@@ -10,6 +10,14 @@ const Blueprint = struct {
     cla_for_obs_bot: i64,
     ore_for_geo_bot: i64,
     obs_for_geo_bot: i64,
+    // derived quantities
+
+    // The maximum number of each bot of each type that should be built.
+    // (More would be a waste, as this is the maximum amount of each resource
+    // that can be consumed in a single minute)
+    max_ore_bots: i64,
+    max_cla_bots: i64,
+    max_obs_bots: i64,
 };
 
 const Input = struct {
@@ -27,7 +35,7 @@ const Input = struct {
 
         while (lines.next()) |line| {
             var nums = std.mem.tokenize(u8, line, "Blueprint : Eachoebcs.ydg");
-            input.blueprints.appendAssumeCapacity(Blueprint{
+            var bp = Blueprint{
                 .id = try std.fmt.parseInt(i64, nums.next().?, 10),
                 .ore_for_ore_bot = try std.fmt.parseInt(i64, nums.next().?, 10),
                 .ore_for_cla_bot = try std.fmt.parseInt(i64, nums.next().?, 10),
@@ -35,7 +43,14 @@ const Input = struct {
                 .cla_for_obs_bot = try std.fmt.parseInt(i64, nums.next().?, 10),
                 .ore_for_geo_bot = try std.fmt.parseInt(i64, nums.next().?, 10),
                 .obs_for_geo_bot = try std.fmt.parseInt(i64, nums.next().?, 10),
-            });
+                .max_ore_bots = undefined,
+                .max_cla_bots = undefined,
+                .max_obs_bots = undefined,
+            };
+            bp.max_obs_bots = bp.obs_for_geo_bot;
+            bp.max_cla_bots = bp.cla_for_obs_bot;
+            bp.max_ore_bots = std.math.max(std.math.max(bp.ore_for_ore_bot, bp.ore_for_cla_bot), std.math.max(bp.ore_for_obs_bot, bp.ore_for_geo_bot));
+            input.blueprints.appendAssumeCapacity(bp);
         }
         return input;
     }
@@ -147,11 +162,11 @@ fn maxGeodes(bp: Blueprint, state: State, best: *i64) void {
     var actions = std.BoundedArray(Action, 5).init(0) catch unreachable;
     if (state.ore >= bp.ore_for_geo_bot and state.obs >= bp.obs_for_geo_bot)
         actions.appendAssumeCapacity(.GeoBot);
-    if (state.ore >= bp.ore_for_obs_bot and state.cla >= bp.cla_for_obs_bot)
+    if (state.ore >= bp.ore_for_obs_bot and state.cla >= bp.cla_for_obs_bot and state.obs_bots < bp.max_obs_bots)
         actions.appendAssumeCapacity(.ObsBot);
-    if (state.ore >= bp.ore_for_cla_bot)
+    if (state.ore >= bp.ore_for_cla_bot and state.cla_bots < bp.max_cla_bots)
         actions.appendAssumeCapacity(.ClaBot);
-    if (state.ore >= bp.ore_for_ore_bot)
+    if (state.ore >= bp.ore_for_ore_bot and state.ore_bots < bp.max_ore_bots)
         actions.appendAssumeCapacity(.OreBot);
     actions.appendAssumeCapacity(.Nothing);
     // for each action, compute the new state
@@ -190,9 +205,9 @@ const test_data =
     \\Blueprint 2: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 8 clay. Each geode robot costs 3 ore and 12 obsidian.
 ;
 const part1_test_solution: ?i64 = 33;
-const part1_solution: ?i64 = null; //1192; // correct, but takes a long time to compute
+const part1_solution: ?i64 = 1192;
 const part2_test_solution: ?i64 = 56 * 62;
-const part2_solution: ?i64 = null; //14725; // correct, but slow
+const part2_solution: ?i64 = 14725;
 
 // Just boilerplate below here, nothing to see
 
