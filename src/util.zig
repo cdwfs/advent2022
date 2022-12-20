@@ -11,21 +11,38 @@ pub const gpa = gpa_impl.allocator();
 
 // Add utility functions here
 
+// Returns the signed variant of an integer type (or the type itself, if it's already signed
+fn Signed(comptime IntOrFloat: type) type {
+    return switch(@typeInfo(IntOrFloat)) {
+        .Int => @Type(.{ .Int = .{
+                .signedness = .signed,
+                .bits = @typeInfo(IntOrFloat).Int.bits,
+            } }),
+        .Float => IntOrFloat,
+        else => unreachable, // Signed(T) only supports Int or Float types
+    };
+}
+
+test "Signed" {
+    try std.testing.expectEqual(Signed(u8), i8);
+    try std.testing.expectEqual(Signed(i32), i32);
+    try std.testing.expectEqual(Signed(f32), f32);
+    //try std.testing.expectError(Signed(void), anyerror);
+}
+
 // Returns an iterator that returns values from [start..end), incrementing by step.
-// TODO: can't use a negative step if T is unsigned. Need to do some type shenanigans.
-pub fn range(comptime T: type, args: struct { start: T = 0, end: T, step: T = 1 }) RangeIterator(T) {
+pub fn range(comptime T: type, args: struct { start: T = 0, end: T, step: Signed(T) = 1 }) RangeIterator(T) {
     return .{
         .current = args.start,
         .end = args.end,
         .step = args.step,
     };
 }
-
 fn RangeIterator(comptime T: type) type {
     return struct {
         current: T,
         end: T,
-        step: T,
+        step: Signed(T),
 
         const Self = @This();
 
@@ -41,7 +58,10 @@ fn RangeIterator(comptime T: type) type {
             }
             const result = self.current;
             self.current = switch (@typeInfo(T)) {
-                .Int => self.current +% self.step,
+                // The casting here is necessary to support signed steps with unsigned start/end,
+                // but implicitly limits the range of useful values to the intersection of signed & unsigned ranges.
+                .Int => @intCast(T, @intCast(Signed(T), self.current) +% self.step),
+
                 .Float => self.current + self.step,
                 else => self.current,
             };
@@ -96,15 +116,15 @@ test "test_range" {
     try std.testing.expectEqual(@floatCast(f32, 0 + 2 + 4 + 6 + 8), sum4);
 
     // Test negative step
-    var sum5: i32 = 0;
+    var sum5: u32 = 0;
     var count5: usize = 0;
-    var loop5_range = range(i32, .{ .start = 5, .end = 0, .step = -1 });
+    var loop5_range = range(u32, .{ .start = 5, .end = 0, .step = -1 });
     while (loop5_range.next()) |i| {
         count5 += 1;
         sum5 += i;
     }
-    try std.testing.expectEqual(@intCast(usize, 5), count5);
-    try std.testing.expectEqual(@intCast(i32, 5 + 4 + 3 + 2 + 1), sum5);
+    try std.testing.expectEqual(@intCast(usize, 5), count5); // does _not_ process 0!
+    try std.testing.expectEqual(@intCast(u32, 5 + 4 + 3 + 2 + 1), sum5);
 }
 
 // Useful stdlib functions
