@@ -142,3 +142,7 @@ A list of the puzzles, and what new language/tool features I learned each day:
 ### [Day 19: Not Enough Minerals](https://adventofcode.com/2022/day/19)
 - Yet another "huge search space" problem where my pruning is _just barely_ good enough to get a solution in a timely fashion, but clearly plenty of room for improvement based on some of the other times I'm seeing.
 - Revisit me after day 25!
+
+### [Day 20: Grove Positioning System](https://adventofcode.com/2022/day/20)
+- The trick today was figuring out how to turn large move distances into equivalent smaller ones.
+- Note that "equivalent" has a different meaning when you're moving an item in the list by N spaces and when you're peeking ahead by N items. Off-by-one errors aplenty!
