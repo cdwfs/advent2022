@@ -146,3 +146,6 @@ A list of the puzzles, and what new language/tool features I learned each day:
 ### [Day 20: Grove Positioning System](https://adventofcode.com/2022/day/20)
 - The trick today was figuring out how to turn large move distances into equivalent smaller ones.
 - Note that "equivalent" has a different meaning when you're moving an item in the list by N spaces and when you're peeking ahead by N items. Off-by-one errors aplenty!
+
+### [Day 21: Monkey Math](https://adventofcode.com/2022/day/21)
+- It's taken me this long to realize that I don't need to pass `std.BoundingArray(WhateverTheHell,capacity)` into functions if they're just reading the array contents. Just have the function take a slice.
