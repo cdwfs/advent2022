@@ -149,3 +149,8 @@ A list of the puzzles, and what new language/tool features I learned each day:
 
 ### [Day 21: Monkey Math](https://adventofcode.com/2022/day/21)
 - It's taken me this long to realize that I don't need to pass `std.BoundingArray(WhateverTheHell,capacity)` into functions if they're just reading the array contents. Just have the function take a slice.
+
+### [Day 22: Monkey Map](https://adventofcode.com/2022/day/22)
+- Hey, this problem [seems familiar](https://github.com/cdwfs/t3p)...
+- I like having access to enum tags as strings out of the box.
+- I don't like the constant struggle of wondering whether a given integer field should be signed or unsigned, and which is likely to result in fewer readability-killing typecasts.
