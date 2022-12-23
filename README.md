@@ -154,3 +154,8 @@ A list of the puzzles, and what new language/tool features I learned each day:
 - Hey, this problem [seems familiar](https://github.com/cdwfs/t3p)...
 - I like having access to enum tags as strings out of the box.
 - I don't like the constant struggle of wondering whether a given integer field should be signed or unsigned, and which is likely to result in fewer readability-killing typecasts.
+
+### [Day 23: Unstable Diffusion](https://adventofcode.com/2022/day/23)
+- Hung up for a bit because I'd flipped north/south and positive/negative Y. Strangely, the larger example input worked both ways! Fortunately the smaller one didn't.
+- Part 2 takes around 5 seconds to give the correct answer. I'm sure I could optimize that down, now that I know what's going on; not continually creating and destroying the intermediate hashmap for proposed moves seems like a good first step. Or maybe abandoning hashmaps entirely, since this is all about spatial queries, and the search space isn't _that_ large (256x256 tops). Maybe try a bitset?
+- Revisit me after day 25!
