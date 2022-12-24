@@ -22,7 +22,7 @@ pub fn getLineEnding(text:[] const u8) ?[] const u8 {
 
 // Absolute value variant for Vectors
 // (courtesty of @interlinked on the Zig Discord)
-fn abs(vector: anytype) @TypeOf(vector) {
+pub fn abs(vector: anytype) @TypeOf(vector) {
   const info = @typeInfo(@TypeOf(vector)).Vector;
   const shr = @as(info.child, @bitSizeOf(info.child)) - 1;
   const m = vector >> @splat(info.len, shr);

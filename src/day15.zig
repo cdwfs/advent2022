@@ -43,7 +43,7 @@ const Input = struct {
 
 inline fn manDist(a: Vec2, b: Vec2) i64 {
     //return (std.math.absInt(a[0] - b[0]) catch unreachable) + (std.math.absInt(a[1] - b[1]) catch unreachable);
-    return @reduce(.Add, abs(a - b));
+    return @reduce(.Add, util.abs(a - b));
 }
 
 const RangeEndpoint = struct {
